@@ -620,7 +620,12 @@
   }
 
   function scanSharedFrame() {
-    if (!capture.metadata || els.captureVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+    if (
+      !capture.metadata ||
+      els.captureVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
+      els.captureVideo.videoWidth === 0 ||
+      els.captureVideo.videoHeight === 0
+    ) {
       return;
     }
     const canvas = els.captureCanvas;
