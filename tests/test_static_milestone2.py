@@ -36,6 +36,7 @@ def test_capture_controls_are_present() -> None:
     assert 'id="stopCaptureButton"' in html
     assert 'id="detectedResultImage" class="detected-result-image"' in html
     assert 'id="detectedResultPlaceholder"' in html
+    assert 'class="capture-source-mini"' in html
     assert 'id="captureVideo" class="capture-source-video" autoplay muted playsinline' in html
     assert 'id="captureCanvas"' in html
     assert 'id="detectScores"' in html
@@ -45,6 +46,7 @@ def test_browser_detection_logic_is_present() -> None:
     script = read("app.js")
 
     assert "navigator.mediaDevices.getDisplayMedia" in script
+    assert "await els.captureVideo.play();" in script
     assert "RANK_TEMPLATE_BASE = \"./assets/rank_templates\"" in script
     assert "RANK_SCORE_THRESHOLD = 0.62" in script
     assert "RANK_MIN_MATCHES = 10" in script

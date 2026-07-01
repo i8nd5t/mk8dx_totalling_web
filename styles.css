@@ -276,14 +276,23 @@ input:focus {
   text-align: center;
 }
 
+.capture-source-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .capture-source-video {
-  position: fixed;
-  left: -2px;
-  top: -2px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+  display: block;
+  width: 128px;
+  height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #07080c;
+  object-fit: contain;
 }
 
 .detect-scores {

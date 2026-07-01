@@ -520,6 +520,7 @@
         audio: false,
       });
       els.captureVideo.srcObject = capture.stream;
+      await els.captureVideo.play();
       els.startCaptureButton.disabled = true;
       els.stopCaptureButton.disabled = false;
       setCaptureStatus("画面共有中。リザルト画面を監視しています。");
