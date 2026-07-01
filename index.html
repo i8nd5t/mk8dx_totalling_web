@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MK Lounge Static Scorer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">MK8DX Lounge</p>
+            <h1>Static Scorer</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="team-field">
+              <span>自チーム</span>
+              <input id="myTeamInput" type="text" maxlength="12" autocomplete="off" placeholder="例: A" />
+            </label>
+            <button id="resetButton" class="danger-button" type="button">Reset All</button>
+          </div>
+        </header>
+
+        <section class="layout-grid">
+          <section class="panel setup-panel" aria-labelledby="raceInputTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Race Input</p>
+                <h2 id="raceInputTitle">レース結果入力</h2>
+              </div>
+              <button id="addRaceButton" class="primary-button" type="button">Add Race</button>
+            </div>
+            <p class="hint">1レース目は手入力します。2レース目以降の自動判定は次のMilestoneで追加します。</p>
+            <div id="inputError" class="message error-message" hidden></div>
+            <div class="race-entry-grid" id="raceEntryGrid"></div>
+          </section>
+
+          <section class="panel ranking-panel" aria-labelledby="rankingTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Team Ranking</p>
+                <h2 id="rankingTitle">チーム順位</h2>
+              </div>
+              <span id="raceCountBadge" class="badge">Race 0/12</span>
+            </div>
+            <div id="rankingList" class="ranking-list"></div>
+          </section>
+        </section>
+
+        <section class="history-section" aria-labelledby="historyTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Race History</p>
+              <h2 id="historyTitle">履歴編集</h2>
+            </div>
+            <p class="hint">履歴を編集すると、集計とoverlayがすぐ更新されます。</p>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </section>
+
+      <aside class="overlay-stage" aria-labelledby="overlayTitle">
+        <div class="overlay-instructions">
+          <p class="eyebrow">OBS Crop Area</p>
+          <h2 id="overlayTitle">Overlay Preview</h2>
+        </div>
+        <section id="overlaySurface" class="overlay-surface">
+          <div class="overlay-header">
+            <span id="overlayRaceCount">Race 0/12</span>
+          </div>
+          <div id="overlayRanking" class="overlay-ranking"></div>
+        </section>
+      </aside>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
