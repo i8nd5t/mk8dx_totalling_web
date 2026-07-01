@@ -1,5 +1,6 @@
 (function () {
   const STORAGE_KEY = "mk-lounge-static-scorer:v1";
+  const STORAGE_VERSION = 1;
   const MAX_RACES = 12;
   const SCORE_TABLE = {
     1: 15,
@@ -77,7 +78,7 @@
 
   function defaultState() {
     return {
-      version: 1,
+      version: STORAGE_VERSION,
       myTeamTag: "",
       races: [],
       draftEntries: blankEntries(),
@@ -93,7 +94,7 @@
         return defaultState();
       }
       const parsed = JSON.parse(raw);
-      if (parsed.version !== 1 || !Array.isArray(parsed.races)) {
+      if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.races)) {
         return defaultState();
       }
       return {
@@ -291,6 +292,14 @@
 
       const title = document.createElement("h3");
       title.textContent = `Race ${race.raceNo}`;
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "icon-danger-button";
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", () => deleteRace(race.raceNo));
+      const cardHeader = document.createElement("div");
+      cardHeader.className = "history-card-header";
+      cardHeader.append(title, deleteButton);
 
       const entries = document.createElement("div");
       entries.className = "history-entries";
@@ -322,7 +331,7 @@
         entries.append(row);
       }
 
-      card.append(title, entries);
+      card.append(cardHeader, entries);
       els.historyList.append(card);
     });
   }
@@ -430,6 +439,24 @@
     state.pendingMatch = null;
     saveState();
     renderPendingMatch();
+  }
+
+  function deleteRace(raceNo) {
+    if (!window.confirm(`Race ${raceNo} を削除します。よろしいですか？`)) {
+      return;
+    }
+    state.races = state.races
+      .filter((race) => race.raceNo !== raceNo)
+      .map((race, index) => ({
+        ...race,
+        raceNo: index + 1,
+      }));
+    if (raceNo === 1) {
+      state.specimens = [];
+      state.pendingMatch = null;
+    }
+    saveState();
+    renderAll();
   }
 
   function resetAll() {

@@ -417,8 +417,26 @@ input:focus {
 }
 
 .history-card h3 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 15px;
+}
+
+.history-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.icon-danger-button {
+  min-height: 28px;
+  border-radius: 5px;
+  background: rgba(255, 105, 120, 0.16);
+  color: #ffb3bb;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .history-entries {
