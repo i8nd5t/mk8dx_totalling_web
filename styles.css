@@ -370,32 +370,6 @@ input:focus {
   text-align: right;
 }
 
-.ranking-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.ranking-row {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 62px;
-  align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 6px 10px;
-}
-
-.ranking-row.my-team {
-  background: rgba(245, 208, 76, 0.22);
-  outline: 1px solid rgba(245, 208, 76, 0.45);
-}
-
-.rank-no {
-  color: var(--accent);
-  font-weight: 900;
-}
 
 .team-name {
   overflow: hidden;
@@ -494,10 +468,10 @@ input:focus {
 }
 
 .scoreboard {
-  --col-score: 58px;
+  --col-score: 62px;
   --col-gap: 4px;
   display: inline-block;
-  width: 100%;
+  width: 28%;
   border: 1px solid rgba(255, 255, 255, 0);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0);
@@ -689,6 +663,7 @@ input:focus {
   justify-content: flex-end;
   min-width: var(--col-score);
   margin-right: 3px;
+  padding-right: 3px;
   color: #ffffff;
   font-family: "DS-Digital", monospace;
   font-size: 27px;

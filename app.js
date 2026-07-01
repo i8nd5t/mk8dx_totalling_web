@@ -35,8 +35,6 @@
     addRaceButton: document.getElementById("addRaceButton"),
     raceEntryGrid: document.getElementById("raceEntryGrid"),
     inputError: document.getElementById("inputError"),
-    rankingList: document.getElementById("rankingList"),
-    raceCountBadge: document.getElementById("raceCountBadge"),
     historyList: document.getElementById("historyList"),
     overlayRaceCount: document.getElementById("overlayRaceCount"),
     overlayRanking: document.getElementById("overlayRanking"),
@@ -187,10 +185,6 @@
     els.inputError.hidden = !message;
   }
 
-  function raceCountText() {
-    return `Race ${state.races.length}/${MAX_RACES}`;
-  }
-
   function renderDraftInputs() {
     els.raceEntryGrid.innerHTML = "";
     for (const entry of state.draftEntries) {
@@ -218,30 +212,6 @@
       row.append(position, input, score);
       els.raceEntryGrid.append(row);
     }
-  }
-
-  function renderRanking() {
-    const ranking = rankingFromRaces(state.races);
-    els.rankingList.innerHTML = "";
-    els.raceCountBadge.textContent = raceCountText();
-    if (ranking.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "empty-state";
-      empty.textContent = "まだ集計されたレースはありません。1レース目を入力すると順位表が表示されます。";
-      els.rankingList.append(empty);
-      return;
-    }
-    ranking.forEach((item, index) => {
-      const row = document.createElement("div");
-      row.className = `ranking-row${isMyTeam(item.team) ? " my-team" : ""}`;
-      row.innerHTML = `
-        <span class="rank-no">${index + 1}</span>
-        <span class="team-name"></span>
-        <span class="team-score">${item.score}</span>
-      `;
-      row.querySelector(".team-name").textContent = item.team;
-      els.rankingList.append(row);
-    });
   }
 
   function renderOverlay() {
@@ -350,7 +320,6 @@
             syncSpecimenTeamsFromFirstRace();
           }
           saveState();
-          renderRanking();
           renderOverlay();
           renderSpecimenStatus();
         });
@@ -524,7 +493,6 @@
   function renderAll() {
     els.myTeamInput.value = state.myTeamTag;
     renderDraftInputs();
-    renderRanking();
     renderHistory();
     renderOverlay();
     renderSpecimenStatus();

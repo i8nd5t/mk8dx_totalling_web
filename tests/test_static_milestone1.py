@@ -59,5 +59,5 @@ def test_overlay_crop_area_has_stable_dimensions() -> None:
     assert "min-height: 690px;" in styles
     assert ".app-shell" in styles
     assert "grid-template-columns: minmax(780px, 1fr) 430px;" in styles
-    assert "--col-score: 58px;" in styles
+    assert "--col-score: 62px;" in styles
     assert "grid-template-columns: minmax(0, 1fr) var(--col-score);" in styles
