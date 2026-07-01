@@ -64,10 +64,12 @@
                 <button id="clearPendingRaceButton" class="secondary-button" type="button">Clear</button>
               </div>
             </div>
-            <div class="capture-preview">
-              <video id="captureVideo" autoplay muted playsinline></video>
-              <canvas id="captureCanvas" width="1280" height="720" hidden></canvas>
+            <div class="result-capture-preview">
+              <img id="detectedResultImage" alt="検出されたリザルト画面" hidden />
+              <p id="detectedResultPlaceholder">リザルト画面を検出すると、ここにスクリーンショットが表示されます。</p>
             </div>
+            <video id="captureVideo" autoplay muted playsinline hidden></video>
+            <canvas id="captureCanvas" width="1280" height="720" hidden></canvas>
             <div id="detectScores" class="detect-scores"></div>
           </section>
 

@@ -44,6 +44,8 @@
     captureStatus: document.getElementById("captureStatus"),
     captureVideo: document.getElementById("captureVideo"),
     captureCanvas: document.getElementById("captureCanvas"),
+    detectedResultImage: document.getElementById("detectedResultImage"),
+    detectedResultPlaceholder: document.getElementById("detectedResultPlaceholder"),
     detectScores: document.getElementById("detectScores"),
     specimenStatus: document.getElementById("specimenStatus"),
     pendingMatchPanel: document.getElementById("pendingMatchPanel"),
@@ -628,11 +630,18 @@
     renderDetectionScores(result.scores);
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
+      showDetectedResultScreenshot(canvas);
       handleDetectedFrame(ctx);
       setCaptureStatus(`リザルト画面を検出しました。rank_matches=${result.matches}`, "detected");
     } else {
       setCaptureStatus(`監視中。rank_matches=${result.matches}`);
     }
+  }
+
+  function showDetectedResultScreenshot(canvas) {
+    els.detectedResultImage.src = canvas.toDataURL("image/jpeg", 0.82);
+    els.detectedResultImage.hidden = false;
+    els.detectedResultPlaceholder.hidden = true;
   }
 
   function handleDetectedFrame(ctx) {
