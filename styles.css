@@ -162,7 +162,7 @@ input:focus {
 
 .layout-grid {
   display: grid;
-  grid-template-columns: minmax(440px, 1fr) minmax(320px, 0.72fr);
+  grid-template-columns: minmax(440px, 1fr);
   gap: 14px;
   margin-top: 14px;
 }
@@ -217,6 +217,71 @@ input:focus {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 22px;
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.race-input-modal {
+  width: min(1120px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(24, 27, 36, 0.98);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+  padding: 18px;
+}
+
+.modal-heading,
+.modal-actions {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.modal-body {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(420px, 0.9fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.modal-capture-preview {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #07080c;
+  aspect-ratio: 16 / 9;
+}
+
+.modal-capture-preview p {
+  margin: 0;
+  color: var(--muted);
+  padding: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .capture-panel {

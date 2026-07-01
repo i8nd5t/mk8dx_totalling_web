@@ -19,24 +19,12 @@
               <span>自チーム</span>
               <input id="myTeamInput" type="text" maxlength="12" autocomplete="off" placeholder="例: A" />
             </label>
+            <button id="openManualInputButton" class="secondary-button" type="button">手動入力</button>
             <button id="resetButton" class="danger-button" type="button">Reset All</button>
           </div>
         </header>
 
         <section class="layout-grid">
-          <section class="panel setup-panel" aria-labelledby="raceInputTitle">
-            <div class="panel-heading">
-              <div>
-                <p class="eyebrow">Race Input</p>
-                <h2 id="raceInputTitle">レース結果入力</h2>
-              </div>
-              <button id="addRaceButton" class="primary-button" type="button">Add Race</button>
-            </div>
-            <p class="hint">1レース目は手入力します。2レース目以降の自動判定は次のMilestoneで追加します。</p>
-            <div id="inputError" class="message error-message" hidden></div>
-            <div class="race-entry-grid" id="raceEntryGrid"></div>
-          </section>
-
           <section class="panel capture-panel" aria-labelledby="captureTitle">
             <div class="panel-heading">
               <div>
@@ -104,6 +92,32 @@
         </section>
       </aside>
     </main>
+
+    <div id="raceInputModal" class="modal-backdrop" hidden>
+      <section class="race-input-modal" role="dialog" aria-modal="true" aria-labelledby="raceInputTitle">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">Race Input</p>
+            <h2 id="raceInputTitle">レース結果入力</h2>
+          </div>
+          <button id="closeRaceInputModalButton" class="secondary-button" type="button">閉じる</button>
+        </div>
+        <p id="raceInputModalHint" class="hint">1レース目の順位タグを入力してください。</p>
+        <div class="modal-body">
+          <div class="modal-capture-preview">
+            <div id="modalResultImage" class="detected-result-image" hidden></div>
+            <p id="modalResultPlaceholder">リザルト画面を検出すると、ここにスクリーンショットが表示されます。</p>
+          </div>
+          <div>
+            <div id="inputError" class="message error-message" hidden></div>
+            <div class="race-entry-grid" id="raceEntryGrid"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="addRaceButton" class="primary-button" type="button">このレースを追加</button>
+        </div>
+      </section>
+    </div>
 
     <script src="./app.js"></script>
   </body>

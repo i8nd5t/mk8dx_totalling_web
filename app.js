@@ -32,8 +32,12 @@
 
   const els = {
     myTeamInput: document.getElementById("myTeamInput"),
+    openManualInputButton: document.getElementById("openManualInputButton"),
     resetButton: document.getElementById("resetButton"),
     addRaceButton: document.getElementById("addRaceButton"),
+    raceInputModal: document.getElementById("raceInputModal"),
+    closeRaceInputModalButton: document.getElementById("closeRaceInputModalButton"),
+    raceInputModalHint: document.getElementById("raceInputModalHint"),
     raceEntryGrid: document.getElementById("raceEntryGrid"),
     inputError: document.getElementById("inputError"),
     historyList: document.getElementById("historyList"),
@@ -47,6 +51,8 @@
     captureCanvas: document.getElementById("captureCanvas"),
     detectedResultImage: document.getElementById("detectedResultImage"),
     detectedResultPlaceholder: document.getElementById("detectedResultPlaceholder"),
+    modalResultImage: document.getElementById("modalResultImage"),
+    modalResultPlaceholder: document.getElementById("modalResultPlaceholder"),
     specimenStatus: document.getElementById("specimenStatus"),
     pendingMatchPanel: document.getElementById("pendingMatchPanel"),
     pendingMatchEntries: document.getElementById("pendingMatchEntries"),
@@ -67,6 +73,7 @@
     lastFeatures: null,
     heldResult: false,
     lockedUntil: 0,
+    lastScreenshotUrl: "",
   };
 
   function blankEntries() {
@@ -186,6 +193,35 @@
   function showError(message) {
     els.inputError.textContent = message;
     els.inputError.hidden = !message;
+  }
+
+  function openRaceInputModal(reason = "manual") {
+    els.raceInputModal.hidden = false;
+    els.raceInputModalHint.textContent =
+      reason === "detected"
+        ? "リザルト画面を検出しました。順位タグを確認して入力してください。"
+        : "順位タグを入力してください。";
+    renderModalScreenshot();
+    const firstInput = els.raceEntryGrid.querySelector("input");
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }
+
+  function closeRaceInputModal() {
+    els.raceInputModal.hidden = true;
+  }
+
+  function renderModalScreenshot() {
+    if (capture.lastScreenshotUrl) {
+      els.modalResultImage.style.backgroundImage = `url("${capture.lastScreenshotUrl}")`;
+      els.modalResultImage.hidden = false;
+      els.modalResultPlaceholder.hidden = true;
+      return;
+    }
+    els.modalResultImage.style.backgroundImage = "";
+    els.modalResultImage.hidden = true;
+    els.modalResultPlaceholder.hidden = false;
   }
 
   function renderDraftInputs() {
@@ -401,6 +437,7 @@
     state.draftEntries = blankEntries();
     maybeBuildFirstRaceSpecimens();
     saveState();
+    closeRaceInputModal();
     renderAll();
   }
 
@@ -490,6 +527,10 @@
     state.specimens = fresh.specimens;
     state.pendingMatch = fresh.pendingMatch;
     capture.lastFeatures = null;
+    capture.lastScreenshotUrl = "";
+    els.detectedResultImage.style.backgroundImage = "";
+    els.detectedResultImage.hidden = true;
+    els.detectedResultPlaceholder.hidden = false;
     releaseHeldResult();
     capture.lockedUntil = 0;
     localStorage.removeItem(STORAGE_KEY);
@@ -499,6 +540,13 @@
 
   function bindEvents() {
     els.addRaceButton.addEventListener("click", addRaceFromDraft);
+    els.openManualInputButton.addEventListener("click", () => openRaceInputModal("manual"));
+    els.closeRaceInputModalButton.addEventListener("click", closeRaceInputModal);
+    els.raceInputModal.addEventListener("click", (event) => {
+      if (event.target === els.raceInputModal) {
+        closeRaceInputModal();
+      }
+    });
     els.resetButton.addEventListener("click", resetAll);
     els.startCaptureButton.addEventListener("click", startCapture);
     els.stopCaptureButton.addEventListener("click", stopCapture);
@@ -518,6 +566,7 @@
     renderOverlay();
     renderSpecimenStatus();
     renderPendingMatch();
+    renderModalScreenshot();
   }
 
   async function startCapture() {
@@ -664,9 +713,11 @@
   }
 
   function showDetectedResultScreenshot(canvas) {
-    els.detectedResultImage.style.backgroundImage = `url("${canvas.toDataURL("image/jpeg", 0.82)}")`;
+    capture.lastScreenshotUrl = canvas.toDataURL("image/jpeg", 0.82);
+    els.detectedResultImage.style.backgroundImage = `url("${capture.lastScreenshotUrl}")`;
     els.detectedResultImage.hidden = false;
     els.detectedResultPlaceholder.hidden = true;
+    renderModalScreenshot();
   }
 
   function isResultProcessingLocked() {
@@ -686,6 +737,9 @@
   function handleDetectedFrame(ctx) {
     capture.heldResult = true;
     capture.lastFeatures = extractNameFeatures(ctx);
+    if (state.races.length === 0) {
+      openRaceInputModal("detected");
+    }
     const builtSpecimens = maybeBuildFirstRaceSpecimens();
     if (builtSpecimens) {
       saveState();

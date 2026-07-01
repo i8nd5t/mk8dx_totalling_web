@@ -16,6 +16,10 @@ def test_app_is_buildless_static_page() -> None:
     assert "Overlay Preview" in html
     assert "Race History" in html
     assert "レース結果入力" in html
+    assert 'id="raceInputModal"' in html
+    assert 'role="dialog"' in html
+    assert 'id="openManualInputButton"' in html
+    assert 'id="modalResultImage"' in html
 
 
 def test_milestone1_state_and_scoring_are_present() -> None:
@@ -33,6 +37,9 @@ def test_milestone1_state_and_scoring_are_present() -> None:
 def test_manual_flow_and_reset_are_present() -> None:
     script = read("app.js")
 
+    assert "function openRaceInputModal" in script
+    assert "function closeRaceInputModal" in script
+    assert "function renderModalScreenshot" in script
     assert "function addRaceFromDraft" in script
     assert "function resetAll" in script
     assert "window.confirm" in script
@@ -61,3 +68,4 @@ def test_overlay_crop_area_has_stable_dimensions() -> None:
     assert "grid-template-columns: minmax(780px, 1fr) 430px;" in styles
     assert "--col-score: 62px;" in styles
     assert "grid-template-columns: minmax(0, 1fr) var(--col-score);" in styles
+    assert ".modal-backdrop[hidden]" in styles
