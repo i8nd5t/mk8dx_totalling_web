@@ -639,7 +639,7 @@
   }
 
   function showDetectedResultScreenshot(canvas) {
-    els.detectedResultImage.src = canvas.toDataURL("image/jpeg", 0.82);
+    els.detectedResultImage.style.backgroundImage = `url("${canvas.toDataURL("image/jpeg", 0.82)}")`;
     els.detectedResultImage.hidden = false;
     els.detectedResultPlaceholder.hidden = true;
   }

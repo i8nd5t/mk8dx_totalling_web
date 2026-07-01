@@ -34,7 +34,7 @@ def test_capture_controls_are_present() -> None:
 
     assert 'id="startCaptureButton"' in html
     assert 'id="stopCaptureButton"' in html
-    assert 'id="detectedResultImage"' in html
+    assert 'id="detectedResultImage" class="detected-result-image"' in html
     assert 'id="detectedResultPlaceholder"' in html
     assert 'id="captureVideo" autoplay muted playsinline hidden' in html
     assert 'id="captureCanvas"' in html
@@ -51,6 +51,7 @@ def test_browser_detection_logic_is_present() -> None:
     assert "function ensureRankTemplates" in script
     assert "function detectResultScreen" in script
     assert "function showDetectedResultScreenshot" in script
+    assert "style.backgroundImage" in script
     assert "canvas.toDataURL" in script
     assert "function normalizeVector" in script
     assert "function renderDetectionScores" in script
