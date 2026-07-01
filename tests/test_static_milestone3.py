@@ -1,0 +1,50 @@
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def read(name: str) -> str:
+    return (ROOT / name).read_text()
+
+
+def test_specimen_controls_are_present() -> None:
+    html = read("index.html")
+
+    assert 'id="specimenStatus"' in html
+    assert 'id="buildSpecimensButton"' in html
+    assert 'id="pendingMatchPanel"' in html
+    assert 'id="addPendingRaceButton"' in html
+    assert 'id="clearPendingRaceButton"' in html
+
+
+def test_name_feature_extraction_constants_match_ocr_layout() -> None:
+    script = read("app.js")
+
+    assert "const NAME_X = 678" in script
+    assert "const NAME_Y = 62" in script
+    assert "const NAME_WIDTH = 230" in script
+    assert "const NAME_HEIGHT = 25" in script
+    assert "const NAME_ROW_STRIDE = 52" in script
+    assert "const FEATURE_WIDTH = NAME_WIDTH * 2" in script
+    assert "const FEATURE_HEIGHT = NAME_HEIGHT * 2" in script
+
+
+def test_specimen_and_matching_flow_is_present() -> None:
+    script = read("app.js")
+
+    assert "function buildSpecimensFromLatest" in script
+    assert "function extractNameFeatures" in script
+    assert "function featureFromNameImageData" in script
+    assert "function matchFeatures" in script
+    assert "function maximizeAssignment" in script
+    assert "function uint8ToBase64" in script
+    assert "function base64ToUint8" in script
+    assert "state.pendingMatch" in script
+
+
+def test_first_race_edits_update_specimen_teams() -> None:
+    script = read("app.js")
+
+    assert "function syncSpecimenTeamsFromFirstRace" in script
+    assert "if (race.raceNo === 1)" in script

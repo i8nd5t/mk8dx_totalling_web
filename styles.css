@@ -272,6 +272,62 @@ input:focus {
   color: var(--accent);
 }
 
+.specimen-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.specimen-status {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pending-match {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(245, 208, 76, 0.26);
+  border-radius: 8px;
+  background: rgba(245, 208, 76, 0.08);
+  padding: 12px;
+}
+
+.pending-match h3 {
+  margin: 2px 0 0;
+  font-size: 15px;
+}
+
+.pending-match-entries {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pending-entry {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 5px 6px;
+  font-size: 13px;
+}
+
+.pending-entry span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 900;
+}
+
+.pending-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .entry-row {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 34px;

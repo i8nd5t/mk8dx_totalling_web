@@ -19,6 +19,14 @@
   const RANK_SCORE_THRESHOLD = 0.62;
   const RANK_MIN_MATCHES = 10;
   const DETECTION_INTERVAL_MS = 650;
+  const MATCH_CANDIDATE_COOLDOWN_MS = 5000;
+  const NAME_X = 678;
+  const NAME_Y = 62;
+  const NAME_WIDTH = 230;
+  const NAME_HEIGHT = 25;
+  const NAME_ROW_STRIDE = 52;
+  const FEATURE_WIDTH = NAME_WIDTH * 2;
+  const FEATURE_HEIGHT = NAME_HEIGHT * 2;
 
   const els = {
     myTeamInput: document.getElementById("myTeamInput"),
@@ -37,6 +45,12 @@
     captureVideo: document.getElementById("captureVideo"),
     captureCanvas: document.getElementById("captureCanvas"),
     detectScores: document.getElementById("detectScores"),
+    specimenStatus: document.getElementById("specimenStatus"),
+    buildSpecimensButton: document.getElementById("buildSpecimensButton"),
+    pendingMatchPanel: document.getElementById("pendingMatchPanel"),
+    pendingMatchEntries: document.getElementById("pendingMatchEntries"),
+    addPendingRaceButton: document.getElementById("addPendingRaceButton"),
+    clearPendingRaceButton: document.getElementById("clearPendingRaceButton"),
   };
 
   const state = loadState();
@@ -46,6 +60,8 @@
     metadata: null,
     templates: [],
     lastDetectedAt: 0,
+    lastPendingAt: 0,
+    lastFeatures: null,
   };
 
   function blankEntries() {
@@ -65,6 +81,8 @@
       myTeamTag: "",
       races: [],
       draftEntries: blankEntries(),
+      specimens: [],
+      pendingMatch: null,
     };
   }
 
@@ -81,6 +99,8 @@
       return {
         ...defaultState(),
         ...parsed,
+        specimens: normalizeSpecimens(parsed.specimens || []),
+        pendingMatch: null,
         draftEntries: normalizeEntries(parsed.draftEntries || blankEntries()),
         races: parsed.races.map((race, index) => ({
           raceNo: index + 1,
@@ -94,6 +114,19 @@
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function normalizeSpecimens(specimens) {
+    if (!Array.isArray(specimens)) {
+      return [];
+    }
+    return specimens
+      .filter((specimen) => specimen && specimen.team && specimen.feature)
+      .map((specimen) => ({
+        team: String(specimen.team).trim(),
+        feature: String(specimen.feature),
+      }))
+      .filter((specimen) => specimen.team && specimen.feature);
   }
 
   function normalizeEntries(entries) {
@@ -274,9 +307,13 @@
         input.value = entry.team;
         input.addEventListener("input", () => {
           entry.team = input.value.trim();
+          if (race.raceNo === 1) {
+            syncSpecimenTeamsFromFirstRace();
+          }
           saveState();
           renderRanking();
           renderOverlay();
+          renderSpecimenStatus();
         });
         const score = document.createElement("span");
         score.className = "score-chip";
@@ -288,6 +325,33 @@
       card.append(title, entries);
       els.historyList.append(card);
     });
+  }
+
+  function renderSpecimenStatus() {
+    const count = state.specimens.length;
+    els.specimenStatus.textContent = count >= 12 ? `標本 ${count}件` : "標本なし";
+    els.buildSpecimensButton.disabled = !(state.races.length >= 1 && capture.lastFeatures);
+  }
+
+  function renderPendingMatch() {
+    if (!state.pendingMatch) {
+      els.pendingMatchPanel.hidden = true;
+      els.pendingMatchEntries.innerHTML = "";
+      return;
+    }
+    els.pendingMatchPanel.hidden = false;
+    els.pendingMatchEntries.innerHTML = "";
+    for (const entry of state.pendingMatch.entries) {
+      const row = document.createElement("div");
+      row.className = "pending-entry";
+      row.innerHTML = `
+        <span>${entry.position}</span>
+        <span></span>
+        <span>+${entry.score}</span>
+      `;
+      row.querySelector("span:nth-child(2)").textContent = entry.team;
+      els.pendingMatchEntries.append(row);
+    }
   }
 
   function isMyTeam(team) {
@@ -315,6 +379,59 @@
     renderAll();
   }
 
+  function buildSpecimensFromLatest() {
+    if (!capture.lastFeatures || state.races.length === 0) {
+      showError("標本を作るには、1レース目の入力とリザルト画面検出が必要です。");
+      return;
+    }
+    const sourceRace = state.races[0];
+    state.specimens = sourceRace.entries.map((entry) => ({
+      team: entry.team,
+      feature: uint8ToBase64(capture.lastFeatures[entry.position - 1]),
+    }));
+    state.pendingMatch = null;
+    saveState();
+    showError("");
+    renderAll();
+  }
+
+  function syncSpecimenTeamsFromFirstRace() {
+    const firstRace = state.races[0];
+    if (!firstRace || state.specimens.length < 12) {
+      return;
+    }
+    for (const entry of firstRace.entries) {
+      const specimen = state.specimens[entry.position - 1];
+      if (specimen) {
+        specimen.team = entry.team;
+      }
+    }
+  }
+
+  function addPendingRace() {
+    if (!state.pendingMatch) {
+      return;
+    }
+    if (state.races.length >= MAX_RACES) {
+      showError("12レースまで追加済みです。新しく始める場合はReset Allしてください。");
+      return;
+    }
+    state.races.push({
+      raceNo: state.races.length + 1,
+      entries: normalizeEntries(state.pendingMatch.entries),
+    });
+    state.pendingMatch = null;
+    saveState();
+    showError("");
+    renderAll();
+  }
+
+  function clearPendingRace() {
+    state.pendingMatch = null;
+    saveState();
+    renderPendingMatch();
+  }
+
   function resetAll() {
     if (!window.confirm("すべての履歴、設定、保存データを削除します。よろしいですか？")) {
       return;
@@ -324,6 +441,9 @@
     state.myTeamTag = fresh.myTeamTag;
     state.races = fresh.races;
     state.draftEntries = fresh.draftEntries;
+    state.specimens = fresh.specimens;
+    state.pendingMatch = fresh.pendingMatch;
+    capture.lastFeatures = null;
     localStorage.removeItem(STORAGE_KEY);
     showError("");
     renderAll();
@@ -334,6 +454,9 @@
     els.resetButton.addEventListener("click", resetAll);
     els.startCaptureButton.addEventListener("click", startCapture);
     els.stopCaptureButton.addEventListener("click", stopCapture);
+    els.buildSpecimensButton.addEventListener("click", buildSpecimensFromLatest);
+    els.addPendingRaceButton.addEventListener("click", addPendingRace);
+    els.clearPendingRaceButton.addEventListener("click", clearPendingRace);
     els.myTeamInput.addEventListener("input", () => {
       state.myTeamTag = els.myTeamInput.value.trim();
       saveState();
@@ -347,6 +470,8 @@
     renderRanking();
     renderHistory();
     renderOverlay();
+    renderSpecimenStatus();
+    renderPendingMatch();
   }
 
   async function startCapture() {
@@ -473,10 +598,110 @@
     renderDetectionScores(result.scores);
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
+      handleDetectedFrame(ctx);
       setCaptureStatus(`リザルト画面を検出しました。rank_matches=${result.matches}`, "detected");
     } else {
       setCaptureStatus(`監視中。rank_matches=${result.matches}`);
     }
+  }
+
+  function handleDetectedFrame(ctx) {
+    capture.lastFeatures = extractNameFeatures(ctx);
+    renderSpecimenStatus();
+    if (state.specimens.length < 12 || state.pendingMatch || state.races.length >= MAX_RACES) {
+      return;
+    }
+    const now = Date.now();
+    if (now - capture.lastPendingAt < MATCH_CANDIDATE_COOLDOWN_MS) {
+      return;
+    }
+    const matched = matchFeatures(capture.lastFeatures);
+    if (!matched) {
+      return;
+    }
+    state.pendingMatch = {
+      entries: matched,
+      createdAt: now,
+    };
+    capture.lastPendingAt = now;
+    saveState();
+    renderPendingMatch();
+  }
+
+  function extractNameFeatures(ctx) {
+    const features = [];
+    for (let row = 0; row < 12; row += 1) {
+      const y = NAME_Y + NAME_ROW_STRIDE * row;
+      const imageData = ctx.getImageData(NAME_X, y, NAME_WIDTH, NAME_HEIGHT);
+      features.push(featureFromNameImageData(imageData));
+    }
+    return features;
+  }
+
+  function featureFromNameImageData(imageData) {
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = imageData.width;
+    sourceCanvas.height = imageData.height;
+    const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+    sourceCtx.putImageData(imageData, 0, 0);
+
+    const featureCanvas = document.createElement("canvas");
+    featureCanvas.width = FEATURE_WIDTH;
+    featureCanvas.height = FEATURE_HEIGHT;
+    const featureCtx = featureCanvas.getContext("2d", { willReadFrequently: true });
+    featureCtx.imageSmoothingEnabled = true;
+    featureCtx.drawImage(sourceCanvas, 0, 0, FEATURE_WIDTH, FEATURE_HEIGHT);
+
+    const resized = featureCtx.getImageData(0, 0, FEATURE_WIDTH, FEATURE_HEIGHT);
+    const data = resized.data;
+    const feature = new Uint8Array(FEATURE_WIDTH * FEATURE_HEIGHT);
+    for (let i = 0, j = 0; i < data.length; i += 4, j += 1) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const total = r + g + b;
+      let value = 255 - total / 3;
+      if (550 - total < 120) {
+        value = 255;
+      }
+      if (765 - total > 500) {
+        value = 255;
+      }
+      feature[j] = Math.max(0, Math.min(255, Math.round(value)));
+    }
+    return feature;
+  }
+
+  function matchFeatures(features) {
+    const specimens = state.specimens.map((specimen) => ({
+      team: specimen.team,
+      feature: base64ToUint8(specimen.feature),
+    }));
+    if (specimens.length < 12) {
+      return null;
+    }
+    const scoreMatrix = features.map((feature) => specimens.map((specimen) => -l1Distance(feature, specimen.feature)));
+    const assignment = maximizeAssignment(scoreMatrix);
+    if (!assignment) {
+      return null;
+    }
+    return assignment.map((specimenIndex, rowIndex) => {
+      const position = rowIndex + 1;
+      return {
+        position,
+        team: specimens[specimenIndex].team,
+        score: SCORE_TABLE[position],
+        matchScore: scoreMatrix[rowIndex][specimenIndex],
+      };
+    });
+  }
+
+  function l1Distance(a, b) {
+    let distance = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      distance += Math.abs(a[i] - b[i]);
+    }
+    return distance;
   }
 
   function detectResultScreen(ctx) {
@@ -506,6 +731,93 @@
       score += a[i] * b[i];
     }
     return score;
+  }
+
+  function maximizeAssignment(scoreMatrix) {
+    const rows = scoreMatrix.length;
+    const cols = scoreMatrix[0]?.length || 0;
+    if (rows === 0 || cols < rows) {
+      return null;
+    }
+    let maxScore = -Infinity;
+    for (const row of scoreMatrix) {
+      for (const score of row) {
+        maxScore = Math.max(maxScore, score);
+      }
+    }
+    const cost = scoreMatrix.map((row) => row.map((score) => maxScore - score));
+    const u = Array(rows + 1).fill(0);
+    const v = Array(cols + 1).fill(0);
+    const p = Array(cols + 1).fill(0);
+    const way = Array(cols + 1).fill(0);
+
+    for (let i = 1; i <= rows; i += 1) {
+      p[0] = i;
+      let j0 = 0;
+      const minv = Array(cols + 1).fill(Infinity);
+      const used = Array(cols + 1).fill(false);
+      do {
+        used[j0] = true;
+        const i0 = p[j0];
+        let delta = Infinity;
+        let j1 = 0;
+        for (let j = 1; j <= cols; j += 1) {
+          if (used[j]) {
+            continue;
+          }
+          const cur = cost[i0 - 1][j - 1] - u[i0] - v[j];
+          if (cur < minv[j]) {
+            minv[j] = cur;
+            way[j] = j0;
+          }
+          if (minv[j] < delta) {
+            delta = minv[j];
+            j1 = j;
+          }
+        }
+        for (let j = 0; j <= cols; j += 1) {
+          if (used[j]) {
+            u[p[j]] += delta;
+            v[j] -= delta;
+          } else {
+            minv[j] -= delta;
+          }
+        }
+        j0 = j1;
+      } while (p[j0] !== 0);
+
+      do {
+        const j1 = way[j0];
+        p[j0] = p[j1];
+        j0 = j1;
+      } while (j0 !== 0);
+    }
+
+    const assignment = Array(rows).fill(-1);
+    for (let j = 1; j <= cols; j += 1) {
+      if (p[j] !== 0) {
+        assignment[p[j] - 1] = j - 1;
+      }
+    }
+    return assignment.every((index) => index >= 0) ? assignment : null;
+  }
+
+  function uint8ToBase64(values) {
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < values.length; i += chunkSize) {
+      binary += String.fromCharCode(...values.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  }
+
+  function base64ToUint8(encoded) {
+    const binary = atob(encoded);
+    const values = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      values[i] = binary.charCodeAt(i);
+    }
+    return values;
   }
 
   function renderDetectionScores(scores) {

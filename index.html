@@ -50,6 +50,21 @@
             </div>
             <p class="hint">OBSまたはゲーム画面を共有します。順位表っぽいフレームをブラウザ内で判定します。</p>
             <div id="captureStatus" class="capture-status">未開始</div>
+            <div class="specimen-toolbar">
+              <span id="specimenStatus" class="specimen-status">標本なし</span>
+              <button id="buildSpecimensButton" class="secondary-button" type="button" disabled>Build Specimens</button>
+            </div>
+            <div id="pendingMatchPanel" class="pending-match" hidden>
+              <div>
+                <p class="eyebrow">Detected Race</p>
+                <h3>マッチング候補</h3>
+              </div>
+              <div id="pendingMatchEntries" class="pending-match-entries"></div>
+              <div class="pending-actions">
+                <button id="addPendingRaceButton" class="primary-button" type="button">Add Detected Race</button>
+                <button id="clearPendingRaceButton" class="secondary-button" type="button">Clear</button>
+              </div>
+            </div>
             <div class="capture-preview">
               <video id="captureVideo" autoplay muted playsinline></video>
               <canvas id="captureCanvas" width="1280" height="720" hidden></canvas>
