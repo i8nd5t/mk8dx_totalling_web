@@ -20,6 +20,7 @@ def test_app_is_buildless_static_page() -> None:
     assert 'role="dialog"' in html
     assert 'id="openManualInputButton"' in html
     assert 'id="modalResultImage"' in html
+    assert 'id="addRaceButton"' not in html
 
 
 def test_milestone1_state_and_scoring_are_present() -> None:
@@ -41,6 +42,7 @@ def test_manual_flow_and_reset_are_present() -> None:
     assert "function closeRaceInputModal" in script
     assert "function renderModalScreenshot" in script
     assert "function addRaceFromDraft" in script
+    assert "function maybeAddRaceFromCompletedDraft" in script
     assert "function resetAll" in script
     assert "window.confirm" in script
     assert "12レースまで追加済み" in script

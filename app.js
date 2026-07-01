@@ -34,7 +34,6 @@
     myTeamInput: document.getElementById("myTeamInput"),
     openManualInputButton: document.getElementById("openManualInputButton"),
     resetButton: document.getElementById("resetButton"),
-    addRaceButton: document.getElementById("addRaceButton"),
     raceInputModal: document.getElementById("raceInputModal"),
     closeRaceInputModalButton: document.getElementById("closeRaceInputModalButton"),
     raceInputModalHint: document.getElementById("raceInputModalHint"),
@@ -199,8 +198,8 @@
     els.raceInputModal.hidden = false;
     els.raceInputModalHint.textContent =
       reason === "detected"
-        ? "リザルト画面を検出しました。順位タグを確認して入力してください。"
-        : "順位タグを入力してください。";
+        ? "リザルト画面を検出しました。12位まで入力すると自動で追加されます。"
+        : "12位まで入力すると自動で追加されます。";
     renderModalScreenshot();
     const firstInput = els.raceEntryGrid.querySelector("input");
     if (firstInput) {
@@ -242,6 +241,7 @@
       input.addEventListener("input", () => {
         entry.team = input.value.trim();
         saveState();
+        maybeAddRaceFromCompletedDraft();
       });
 
       const score = document.createElement("span");
@@ -441,6 +441,16 @@
     renderAll();
   }
 
+  function maybeAddRaceFromCompletedDraft() {
+    const isComplete =
+      state.draftEntries.length === 12 && state.draftEntries.every((entry) => entry.team.trim().length > 0);
+    if (!isComplete) {
+      showError("");
+      return;
+    }
+    addRaceFromDraft();
+  }
+
   function maybeBuildFirstRaceSpecimens() {
     if (!capture.lastFeatures || state.races.length === 0 || state.specimens.length >= 12) {
       return false;
@@ -539,7 +549,6 @@
   }
 
   function bindEvents() {
-    els.addRaceButton.addEventListener("click", addRaceFromDraft);
     els.openManualInputButton.addEventListener("click", () => openRaceInputModal("manual"));
     els.closeRaceInputModalButton.addEventListener("click", closeRaceInputModal);
     els.raceInputModal.addEventListener("click", (event) => {
