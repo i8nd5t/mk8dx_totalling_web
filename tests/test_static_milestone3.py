@@ -34,6 +34,11 @@ def test_specimen_and_matching_flow_is_present() -> None:
     script = read("app.js")
 
     assert "function maybeBuildFirstRaceSpecimens" in script
+    assert "const RESULT_PROCESS_COOLDOWN_MS = 90000" in script
+    assert "capture.heldResult = true" in script
+    assert "function isResultProcessingLocked" in script
+    assert "function startResultCooldown" in script
+    assert "function releaseHeldResult" in script
     assert "buildSpecimensButton" not in script
     assert "function extractNameFeatures" in script
     assert "function featureFromNameImageData" in script

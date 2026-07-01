@@ -21,6 +21,7 @@
   const RANK_MIN_MATCHES = 10;
   const DETECTION_INTERVAL_MS = 650;
   const MATCH_CANDIDATE_COOLDOWN_MS = 5000;
+  const RESULT_PROCESS_COOLDOWN_MS = 90000;
   const NAME_X = 678;
   const NAME_Y = 62;
   const NAME_WIDTH = 230;
@@ -65,6 +66,8 @@
     lastDetectedAt: 0,
     lastPendingAt: 0,
     lastFeatures: null,
+    heldResult: false,
+    lockedUntil: 0,
   };
 
   function blankEntries() {
@@ -340,6 +343,10 @@
     const count = state.specimens.length;
     if (count >= 12) {
       els.specimenStatus.textContent = `標本 ${count}件`;
+    } else if (capture.heldResult && state.races.length === 0) {
+      els.specimenStatus.textContent = "リザルト保持中: 1レース目を入力してください";
+    } else if (capture.heldResult) {
+      els.specimenStatus.textContent = "リザルト保持中: 標本を自動作成します";
     } else if (state.races.length === 0 && !capture.lastFeatures) {
       els.specimenStatus.textContent = "標本なし: 1レース目入力とリザルト検出で自動作成";
     } else if (state.races.length === 0) {
@@ -408,6 +415,7 @@
       feature: uint8ToBase64(capture.lastFeatures[entry.position - 1]),
     }));
     state.pendingMatch = null;
+    startResultCooldown();
     return true;
   }
 
@@ -437,6 +445,7 @@
       entries: normalizeEntries(state.pendingMatch.entries),
     });
     state.pendingMatch = null;
+    startResultCooldown();
     saveState();
     showError("");
     renderAll();
@@ -444,8 +453,10 @@
 
   function clearPendingRace() {
     state.pendingMatch = null;
+    releaseHeldResult();
     saveState();
     renderPendingMatch();
+    renderSpecimenStatus();
   }
 
   function deleteRace(raceNo) {
@@ -461,6 +472,8 @@
     if (raceNo === 1) {
       state.specimens = [];
       state.pendingMatch = null;
+      releaseHeldResult();
+      capture.lockedUntil = 0;
     }
     saveState();
     renderAll();
@@ -478,6 +491,8 @@
     state.specimens = fresh.specimens;
     state.pendingMatch = fresh.pendingMatch;
     capture.lastFeatures = null;
+    releaseHeldResult();
+    capture.lockedUntil = 0;
     localStorage.removeItem(STORAGE_KEY);
     showError("");
     renderAll();
@@ -636,9 +651,15 @@
     renderDetectionScores(result.scores);
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
-      showDetectedResultScreenshot(canvas);
-      handleDetectedFrame(ctx);
-      setCaptureStatus(`リザルト画面を検出しました。rank_matches=${result.matches}`, "detected");
+      if (isResultProcessingLocked()) {
+        setCaptureStatus("リザルト処理後のクールダウン中です。", "detected");
+      } else if (capture.heldResult) {
+        setCaptureStatus(`リザルト画面を保持中です。rank_matches=${result.matches}`, "detected");
+      } else {
+        showDetectedResultScreenshot(canvas);
+        handleDetectedFrame(ctx);
+        setCaptureStatus(`リザルト画面を検出して保持しました。rank_matches=${result.matches}`, "detected");
+      }
     } else {
       setCaptureStatus(`監視中。rank_matches=${result.matches}`);
     }
@@ -650,7 +671,22 @@
     els.detectedResultPlaceholder.hidden = true;
   }
 
+  function isResultProcessingLocked() {
+    return Date.now() < capture.lockedUntil;
+  }
+
+  function startResultCooldown() {
+    capture.lockedUntil = Date.now() + RESULT_PROCESS_COOLDOWN_MS;
+    releaseHeldResult();
+  }
+
+  function releaseHeldResult() {
+    capture.heldResult = false;
+    capture.lastFeatures = null;
+  }
+
   function handleDetectedFrame(ctx) {
+    capture.heldResult = true;
     capture.lastFeatures = extractNameFeatures(ctx);
     const builtSpecimens = maybeBuildFirstRaceSpecimens();
     if (builtSpecimens) {
