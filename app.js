@@ -46,7 +46,6 @@
     captureCanvas: document.getElementById("captureCanvas"),
     detectScores: document.getElementById("detectScores"),
     specimenStatus: document.getElementById("specimenStatus"),
-    buildSpecimensButton: document.getElementById("buildSpecimensButton"),
     pendingMatchPanel: document.getElementById("pendingMatchPanel"),
     pendingMatchEntries: document.getElementById("pendingMatchEntries"),
     addPendingRaceButton: document.getElementById("addPendingRaceButton"),
@@ -337,8 +336,17 @@
 
   function renderSpecimenStatus() {
     const count = state.specimens.length;
-    els.specimenStatus.textContent = count >= 12 ? `標本 ${count}件` : "標本なし";
-    els.buildSpecimensButton.disabled = !(state.races.length >= 1 && capture.lastFeatures);
+    if (count >= 12) {
+      els.specimenStatus.textContent = `標本 ${count}件`;
+    } else if (state.races.length === 0 && !capture.lastFeatures) {
+      els.specimenStatus.textContent = "標本なし: 1レース目入力とリザルト検出で自動作成";
+    } else if (state.races.length === 0) {
+      els.specimenStatus.textContent = "標本待ち: 1レース目を入力してください";
+    } else if (!capture.lastFeatures) {
+      els.specimenStatus.textContent = "標本待ち: 1レース目のリザルトを検出してください";
+    } else {
+      els.specimenStatus.textContent = "標本作成準備完了";
+    }
   }
 
   function renderPendingMatch() {
@@ -383,14 +391,14 @@
       entries,
     });
     state.draftEntries = blankEntries();
+    maybeBuildFirstRaceSpecimens();
     saveState();
     renderAll();
   }
 
-  function buildSpecimensFromLatest() {
-    if (!capture.lastFeatures || state.races.length === 0) {
-      showError("標本を作るには、1レース目の入力とリザルト画面検出が必要です。");
-      return;
+  function maybeBuildFirstRaceSpecimens() {
+    if (!capture.lastFeatures || state.races.length === 0 || state.specimens.length >= 12) {
+      return false;
     }
     const sourceRace = state.races[0];
     state.specimens = sourceRace.entries.map((entry) => ({
@@ -398,9 +406,7 @@
       feature: uint8ToBase64(capture.lastFeatures[entry.position - 1]),
     }));
     state.pendingMatch = null;
-    saveState();
-    showError("");
-    renderAll();
+    return true;
   }
 
   function syncSpecimenTeamsFromFirstRace() {
@@ -480,7 +486,6 @@
     els.resetButton.addEventListener("click", resetAll);
     els.startCaptureButton.addEventListener("click", startCapture);
     els.stopCaptureButton.addEventListener("click", stopCapture);
-    els.buildSpecimensButton.addEventListener("click", buildSpecimensFromLatest);
     els.addPendingRaceButton.addEventListener("click", addPendingRace);
     els.clearPendingRaceButton.addEventListener("click", clearPendingRace);
     els.myTeamInput.addEventListener("input", () => {
@@ -632,8 +637,12 @@
 
   function handleDetectedFrame(ctx) {
     capture.lastFeatures = extractNameFeatures(ctx);
+    const builtSpecimens = maybeBuildFirstRaceSpecimens();
+    if (builtSpecimens) {
+      saveState();
+    }
     renderSpecimenStatus();
-    if (state.specimens.length < 12 || state.pendingMatch || state.races.length >= MAX_RACES) {
+    if (builtSpecimens || state.specimens.length < 12 || state.pendingMatch || state.races.length >= MAX_RACES) {
       return;
     }
     const now = Date.now();

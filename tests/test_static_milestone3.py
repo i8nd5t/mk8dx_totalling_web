@@ -12,7 +12,7 @@ def test_specimen_controls_are_present() -> None:
     html = read("index.html")
 
     assert 'id="specimenStatus"' in html
-    assert 'id="buildSpecimensButton"' in html
+    assert 'id="buildSpecimensButton"' not in html
     assert 'id="pendingMatchPanel"' in html
     assert 'id="addPendingRaceButton"' in html
     assert 'id="clearPendingRaceButton"' in html
@@ -33,7 +33,8 @@ def test_name_feature_extraction_constants_match_ocr_layout() -> None:
 def test_specimen_and_matching_flow_is_present() -> None:
     script = read("app.js")
 
-    assert "function buildSpecimensFromLatest" in script
+    assert "function maybeBuildFirstRaceSpecimens" in script
+    assert "buildSpecimensButton" not in script
     assert "function extractNameFeatures" in script
     assert "function featureFromNameImageData" in script
     assert "function matchFeatures" in script
