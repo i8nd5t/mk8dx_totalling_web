@@ -40,6 +40,7 @@
     historyList: document.getElementById("historyList"),
     overlayRaceCount: document.getElementById("overlayRaceCount"),
     overlayRanking: document.getElementById("overlayRanking"),
+    scoreboard: document.getElementById("scoreboard"),
     startCaptureButton: document.getElementById("startCaptureButton"),
     stopCaptureButton: document.getElementById("stopCaptureButton"),
     captureStatus: document.getElementById("captureStatus"),
@@ -53,6 +54,8 @@
     addPendingRaceButton: document.getElementById("addPendingRaceButton"),
     clearPendingRaceButton: document.getElementById("clearPendingRaceButton"),
   };
+  let previousOverlayRaceCount = null;
+  let raceUpdateTimer = 0;
 
   const state = loadState();
   const capture = {
@@ -243,38 +246,65 @@
 
   function renderOverlay() {
     const ranking = rankingFromRaces(state.races);
-    els.overlayRaceCount.textContent = raceCountText();
+    const raceCount = state.races.length;
+    const raceCountChanged = previousOverlayRaceCount !== null && raceCount !== previousOverlayRaceCount;
+    previousOverlayRaceCount = raceCount;
+    els.overlayRaceCount.textContent = `Race ${raceCount} / ${MAX_RACES}`;
     els.overlayRanking.innerHTML = "";
+    els.scoreboard.classList.toggle("no-ranking", ranking.length === 0);
+    if (raceCountChanged) {
+      triggerRaceUpdateAnimation();
+    }
     if (ranking.length === 0) {
-      const row = document.createElement("div");
-      row.className = "overlay-row";
-      row.innerHTML = `
-        <span class="overlay-rank">--</span>
-        <span class="overlay-team">No races</span>
-        <span class="overlay-score">0</span>
-      `;
-      els.overlayRanking.append(row);
       return;
     }
     ranking.forEach((item, index) => {
-      const row = document.createElement("div");
-      row.className = `overlay-row${isMyTeam(item.team) ? " my-team" : ""}`;
-      row.innerHTML = `
-        <span class="overlay-rank">${index + 1}</span>
-        <span class="overlay-team"></span>
-        <span class="overlay-score">${item.score}</span>
-      `;
-      row.querySelector(".overlay-team").textContent = item.team;
-      els.overlayRanking.append(row);
-
       const next = ranking[index + 1];
-      if (next) {
-        const diff = document.createElement("div");
-        diff.className = "overlay-diff";
-        diff.textContent = `+${item.score - next.score}`;
-        els.overlayRanking.append(diff);
-      }
+      const gap = next ? item.score - next.score : null;
+      const row = document.createElement("div");
+      row.className = `team-row${isMyTeam(item.team) ? " own-team" : ""}`;
+      row.innerHTML = `
+        <span class="team-name"></span>
+        <span class="team-score">${renderScore(item.score)}</span>
+        ${renderGapBetween(gap)}
+      `;
+      row.querySelector(".team-name").textContent = item.team;
+      els.overlayRanking.append(row);
     });
+  }
+
+  function triggerRaceUpdateAnimation() {
+    window.clearTimeout(raceUpdateTimer);
+    els.scoreboard.classList.remove("race-updated");
+    els.overlayRaceCount.classList.remove("race-count-updated");
+    void els.scoreboard.offsetWidth;
+    els.scoreboard.classList.add("race-updated");
+    els.overlayRaceCount.classList.add("race-count-updated");
+    raceUpdateTimer = window.setTimeout(() => {
+      els.scoreboard.classList.remove("race-updated");
+      els.overlayRaceCount.classList.remove("race-count-updated");
+    }, 900);
+  }
+
+  function renderScore(score) {
+    return String(score)
+      .trim()
+      .split("")
+      .map((char) => `<span class="score-digit">${escapeHtml(char)}</span>`)
+      .join("");
+  }
+
+  function renderGapBetween(gap) {
+    if (!Number.isFinite(gap)) {
+      return "";
+    }
+    return `<span class="rank-gap">${renderScore(Math.max(0, gap))}</span>`;
+  }
+
+  function escapeHtml(text) {
+    const d = document.createElement("div");
+    d.textContent = text;
+    return d.innerHTML;
   }
 
   function renderHistory() {

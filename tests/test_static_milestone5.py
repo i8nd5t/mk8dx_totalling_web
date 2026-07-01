@@ -44,3 +44,8 @@ def test_readme_links_to_usage_and_deployment_docs() -> None:
 
     assert "[docs/USAGE.md](./docs/USAGE.md)" in readme
     assert "[DEPLOYMENT.md](./DEPLOYMENT.md)" in readme
+
+
+def test_bot_overlay_fonts_are_bundled() -> None:
+    assert (ROOT / "assets" / "fonts" / "DS-DIGIB.TTF").exists()
+    assert (ROOT / "assets" / "fonts" / "FOT-NewRodin-Pro-B.otf").exists()

@@ -20,7 +20,7 @@ Milestone 1:
 - 1レース目以降の手入力
 - 順位別点数の自動計算
 - チーム別集計
-- 管理画面内overlay preview
+- 既存bot overlayデザインを流用した管理画面内overlay preview
 - 自チーム強調表示
 - Race History編集
 - localStorage保存

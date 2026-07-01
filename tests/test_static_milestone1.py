@@ -45,10 +45,10 @@ def test_overlay_and_history_rendering_are_present() -> None:
 
     assert "function renderOverlay" in script
     assert "function renderHistory" in script
-    assert "overlay-row" in script
-    assert "overlay-diff" in script
+    assert "team-row" in script
+    assert "rank-gap" in script
     assert "history-card" in script
-    assert "my-team" in script
+    assert "own-team" in script
 
 
 def test_overlay_crop_area_has_stable_dimensions() -> None:
