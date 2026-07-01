@@ -342,19 +342,19 @@
   function renderSpecimenStatus() {
     const count = state.specimens.length;
     if (count >= 12) {
-      els.specimenStatus.textContent = `標本 ${count}件`;
+      els.specimenStatus.textContent = "自動判定の準備完了";
     } else if (capture.heldResult && state.races.length === 0) {
-      els.specimenStatus.textContent = "リザルト保持中: 1レース目を入力してください";
+      els.specimenStatus.textContent = "リザルトを検出しました。1レース目を入力してください";
     } else if (capture.heldResult) {
-      els.specimenStatus.textContent = "リザルト保持中: 標本を自動作成します";
+      els.specimenStatus.textContent = "リザルトを検出しました。準備中です";
     } else if (state.races.length === 0 && !capture.lastFeatures) {
-      els.specimenStatus.textContent = "標本なし: 1レース目入力とリザルト検出で自動作成";
+      els.specimenStatus.textContent = "1レース目入力とリザルト検出で準備します";
     } else if (state.races.length === 0) {
-      els.specimenStatus.textContent = "標本待ち: 1レース目を入力してください";
+      els.specimenStatus.textContent = "1レース目を入力してください";
     } else if (!capture.lastFeatures) {
-      els.specimenStatus.textContent = "標本待ち: 1レース目のリザルトを検出してください";
+      els.specimenStatus.textContent = "1レース目のリザルトを表示してください";
     } else {
-      els.specimenStatus.textContent = "標本作成準備完了";
+      els.specimenStatus.textContent = "準備中です";
     }
   }
 
@@ -652,16 +652,16 @@
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
       if (isResultProcessingLocked()) {
-        setCaptureStatus("リザルト処理後のクールダウン中です。", "detected");
+        setCaptureStatus("直前のリザルトを処理しました。次のレースを待っています。", "detected");
       } else if (capture.heldResult) {
-        setCaptureStatus(`リザルト画面を保持中です。rank_matches=${result.matches}`, "detected");
+        setCaptureStatus("リザルト画面を検出済みです。確認してください。", "detected");
       } else {
         showDetectedResultScreenshot(canvas);
         handleDetectedFrame(ctx);
-        setCaptureStatus(`リザルト画面を検出して保持しました。rank_matches=${result.matches}`, "detected");
+        setCaptureStatus("リザルト画面を検出しました。確認してください。", "detected");
       }
     } else {
-      setCaptureStatus(`監視中。rank_matches=${result.matches}`);
+      setCaptureStatus("監視中です。");
     }
   }
 

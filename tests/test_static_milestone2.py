@@ -37,6 +37,7 @@ def test_capture_controls_are_present() -> None:
     assert 'id="detectedResultImage" class="detected-result-image"' in html
     assert 'id="detectedResultPlaceholder"' in html
     assert 'class="capture-source-mini"' in html
+    assert 'id="detectScores" class="detect-scores" hidden' in html
     assert 'id="captureVideo" class="capture-source-video" autoplay muted playsinline' in html
     assert 'id="captureCanvas"' in html
     assert 'id="detectScores"' in html
