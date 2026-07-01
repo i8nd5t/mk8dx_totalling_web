@@ -77,6 +77,14 @@ http://localhost:8000/
 
 画面共有を開始すると、順位テンプレートとの一致スコアが管理画面に表示されます。1レース目入力後にリザルト画面を検出すると、`Build Specimens` で標本を作れます。標本作成後は、次の検出フレームからマッチング候補が表示されます。
 
+詳しい使い方は [docs/USAGE.md](./docs/USAGE.md) を参照してください。
+
+## デプロイ
+
+GitHub Pages / Cloudflare Pagesで配信できます。ビルドは不要です。
+
+詳しい手順は [DEPLOYMENT.md](./DEPLOYMENT.md) を参照してください。
+
 ## テスト
 
 ```bash
