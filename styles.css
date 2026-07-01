@@ -55,7 +55,7 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(780px, 1fr) 470px;
+  grid-template-columns: minmax(780px, 1fr) 430px;
   gap: 18px;
   min-height: 100vh;
   padding: 18px;
@@ -484,7 +484,7 @@ input:focus {
 }
 
 .overlay-surface {
-  width: 440px;
+  width: 400px;
   min-height: 690px;
   border-radius: 12px;
   background:
@@ -494,8 +494,8 @@ input:focus {
 }
 
 .scoreboard {
-  --col-score: 72px;
-  --col-gap: 6px;
+  --col-score: 58px;
+  --col-gap: 4px;
   display: inline-block;
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0);
@@ -671,7 +671,7 @@ input:focus {
 
 .overlay-ranking .team-name {
   min-width: 0;
-  margin-left: 7px;
+  margin-left: 5px;
   overflow: hidden;
   color: #ffffff;
   font-family: "NewRodin", "Noto Sans JP", sans-serif;
@@ -688,7 +688,7 @@ input:focus {
   display: inline-flex;
   justify-content: flex-end;
   min-width: var(--col-score);
-  margin-right: 5px;
+  margin-right: 3px;
   color: #ffffff;
   font-family: "DS-Digital", monospace;
   font-size: 27px;
