@@ -26,15 +26,18 @@ Milestone 1:
 - localStorage保存
 - Reset All
 
+Milestone 2:
+
+- `getDisplayMedia` による画面共有
+- videoからcanvasへのフレーム描画
+- 1280x720基準の順位テンプレート読み込み
+- 1〜12位のrank score算出
+- リザルト画面らしさの判定
+- 判定スコアの画面表示
+
 ## ローカルで開く
 
-ビルドは不要です。`index.html` をブラウザで開きます。
-
-```text
-/home/i8nd5t/dev/mk_lounge_totalling_static/index.html
-```
-
-ローカルHTTPサーバーで確認したい場合:
+ビルドは不要です。画面共有とテンプレート画像読み込みを使うため、ローカルHTTPサーバー経由で開くのがおすすめです。
 
 ```bash
 python3 -m http.server 8000
@@ -53,7 +56,7 @@ http://localhost:8000/
 3. OBSでブラウザ画面をキャプチャする
 4. 右側の `Overlay Preview` 部分だけをクロップする
 
-Milestone 2以降で画面共有とリザルト判定を追加します。
+画面共有を開始すると、順位テンプレートとの一致スコアが管理画面に表示されます。
 
 ## テスト
 

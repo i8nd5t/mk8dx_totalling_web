@@ -37,6 +37,26 @@
             <div class="race-entry-grid" id="raceEntryGrid"></div>
           </section>
 
+          <section class="panel capture-panel" aria-labelledby="captureTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Capture</p>
+                <h2 id="captureTitle">画面共有</h2>
+              </div>
+              <div class="capture-actions">
+                <button id="startCaptureButton" class="primary-button" type="button">Start</button>
+                <button id="stopCaptureButton" class="secondary-button" type="button" disabled>Stop</button>
+              </div>
+            </div>
+            <p class="hint">OBSまたはゲーム画面を共有します。順位表っぽいフレームをブラウザ内で判定します。</p>
+            <div id="captureStatus" class="capture-status">未開始</div>
+            <div class="capture-preview">
+              <video id="captureVideo" autoplay muted playsinline></video>
+              <canvas id="captureCanvas" width="1280" height="720" hidden></canvas>
+            </div>
+            <div id="detectScores" class="detect-scores"></div>
+          </section>
+
           <section class="panel ranking-panel" aria-labelledby="rankingTitle">
             <div class="panel-heading">
               <div>

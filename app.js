@@ -15,6 +15,10 @@
     11: 2,
     12: 1,
   };
+  const RANK_TEMPLATE_BASE = "./assets/rank_templates";
+  const RANK_SCORE_THRESHOLD = 0.62;
+  const RANK_MIN_MATCHES = 10;
+  const DETECTION_INTERVAL_MS = 650;
 
   const els = {
     myTeamInput: document.getElementById("myTeamInput"),
@@ -27,9 +31,22 @@
     historyList: document.getElementById("historyList"),
     overlayRaceCount: document.getElementById("overlayRaceCount"),
     overlayRanking: document.getElementById("overlayRanking"),
+    startCaptureButton: document.getElementById("startCaptureButton"),
+    stopCaptureButton: document.getElementById("stopCaptureButton"),
+    captureStatus: document.getElementById("captureStatus"),
+    captureVideo: document.getElementById("captureVideo"),
+    captureCanvas: document.getElementById("captureCanvas"),
+    detectScores: document.getElementById("detectScores"),
   };
 
   const state = loadState();
+  const capture = {
+    stream: null,
+    timer: 0,
+    metadata: null,
+    templates: [],
+    lastDetectedAt: 0,
+  };
 
   function blankEntries() {
     return Array.from({ length: 12 }, (_, index) => {
@@ -315,6 +332,8 @@
   function bindEvents() {
     els.addRaceButton.addEventListener("click", addRaceFromDraft);
     els.resetButton.addEventListener("click", resetAll);
+    els.startCaptureButton.addEventListener("click", startCapture);
+    els.stopCaptureButton.addEventListener("click", stopCapture);
     els.myTeamInput.addEventListener("input", () => {
       state.myTeamTag = els.myTeamInput.value.trim();
       saveState();
@@ -328,6 +347,175 @@
     renderRanking();
     renderHistory();
     renderOverlay();
+  }
+
+  async function startCapture() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      setCaptureStatus("このブラウザは画面共有に対応していません。", "error");
+      return;
+    }
+    try {
+      await ensureRankTemplates();
+      capture.stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          frameRate: { ideal: 15, max: 30 },
+        },
+        audio: false,
+      });
+      els.captureVideo.srcObject = capture.stream;
+      els.startCaptureButton.disabled = true;
+      els.stopCaptureButton.disabled = false;
+      setCaptureStatus("画面共有中。リザルト画面を監視しています。");
+      capture.timer = window.setInterval(scanSharedFrame, DETECTION_INTERVAL_MS);
+      capture.stream.getVideoTracks().forEach((track) => {
+        track.addEventListener("ended", stopCapture);
+      });
+    } catch (error) {
+      setCaptureStatus(`画面共有を開始できませんでした: ${error.message || error}`, "error");
+      stopCapture();
+    }
+  }
+
+  function stopCapture() {
+    if (capture.timer) {
+      window.clearInterval(capture.timer);
+      capture.timer = 0;
+    }
+    if (capture.stream) {
+      capture.stream.getTracks().forEach((track) => track.stop());
+      capture.stream = null;
+    }
+    els.captureVideo.srcObject = null;
+    els.startCaptureButton.disabled = false;
+    els.stopCaptureButton.disabled = true;
+    if (!els.captureStatus.classList.contains("error")) {
+      setCaptureStatus("停止しました。");
+    }
+  }
+
+  function setCaptureStatus(message, kind = "") {
+    els.captureStatus.textContent = message;
+    els.captureStatus.className = `capture-status${kind ? ` ${kind}` : ""}`;
+  }
+
+  async function ensureRankTemplates() {
+    if (capture.metadata && capture.templates.length === 12) {
+      return;
+    }
+    const response = await fetch(`${RANK_TEMPLATE_BASE}/metadata.json`);
+    if (!response.ok) {
+      throw new Error("順位テンプレートを読み込めませんでした。HTTPサーバー経由で開いてください。");
+    }
+    capture.metadata = await response.json();
+    capture.templates = [];
+    for (const file of capture.metadata.files) {
+      const image = await loadImage(`${RANK_TEMPLATE_BASE}/${file}`);
+      const pixels = imageToGrayscaleVector(image, capture.metadata.rank_roi.width, capture.metadata.rank_roi.height);
+      capture.templates.push(normalizeVector(pixels));
+    }
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(`画像を読み込めませんでした: ${src}`));
+      image.src = src;
+    });
+  }
+
+  function imageToGrayscaleVector(image, width, height) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, width, height);
+    return imageDataToVector(ctx.getImageData(0, 0, width, height));
+  }
+
+  function imageDataToVector(imageData) {
+    const data = imageData.data;
+    const values = new Float32Array(imageData.width * imageData.height);
+    for (let i = 0, j = 0; i < data.length; i += 4, j += 1) {
+      values[j] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
+    }
+    return values;
+  }
+
+  function normalizeVector(values) {
+    let sum = 0;
+    for (const value of values) {
+      sum += value;
+    }
+    const mean = sum / values.length;
+    let norm = 0;
+    const normalized = new Float32Array(values.length);
+    for (let i = 0; i < values.length; i += 1) {
+      const value = values[i] - mean;
+      normalized[i] = value;
+      norm += value * value;
+    }
+    const scale = Math.sqrt(norm) || 1;
+    for (let i = 0; i < normalized.length; i += 1) {
+      normalized[i] /= scale;
+    }
+    return normalized;
+  }
+
+  function scanSharedFrame() {
+    if (!capture.metadata || els.captureVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      return;
+    }
+    const canvas = els.captureCanvas;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(els.captureVideo, 0, 0, canvas.width, canvas.height);
+    const result = detectResultScreen(ctx);
+    renderDetectionScores(result.scores);
+    if (result.detected) {
+      capture.lastDetectedAt = Date.now();
+      setCaptureStatus(`リザルト画面を検出しました。rank_matches=${result.matches}`, "detected");
+    } else {
+      setCaptureStatus(`監視中。rank_matches=${result.matches}`);
+    }
+  }
+
+  function detectResultScreen(ctx) {
+    const roi = capture.metadata.rank_roi;
+    const scores = [];
+    let matches = 0;
+    for (let index = 0; index < 12; index += 1) {
+      const y = roi.y + roi.row_stride * index;
+      const imageData = ctx.getImageData(roi.x, y, roi.width, roi.height);
+      const actual = normalizeVector(imageDataToVector(imageData));
+      const score = dot(actual, capture.templates[index]);
+      scores.push(score);
+      if (score >= RANK_SCORE_THRESHOLD) {
+        matches += 1;
+      }
+    }
+    return {
+      detected: matches >= RANK_MIN_MATCHES,
+      matches,
+      scores,
+    };
+  }
+
+  function dot(a, b) {
+    let score = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      score += a[i] * b[i];
+    }
+    return score;
+  }
+
+  function renderDetectionScores(scores) {
+    els.detectScores.innerHTML = "";
+    scores.forEach((score, index) => {
+      const item = document.createElement("div");
+      item.className = `detect-score${score >= RANK_SCORE_THRESHOLD ? " match" : ""}`;
+      item.innerHTML = `<span>${index + 1}</span><span>${score.toFixed(3)}</span>`;
+      els.detectScores.append(item);
+    });
   }
 
   bindEvents();

@@ -1,0 +1,157 @@
+{
+  "normalized_size": {
+    "width": 1280,
+    "height": 720
+  },
+  "rank_roi": {
+    "x": 558,
+    "y": 52,
+    "width": 68,
+    "height": 38,
+    "row_stride": 52
+  },
+  "highlight_detection": {
+    "x": 548,
+    "width": 92,
+    "height": 50,
+    "yellow_ratio_threshold": 0.08,
+    "purpose": "Avoid using the player highlighted yellow row as a normal rank template source."
+  },
+  "files": [
+    "1.png",
+    "2.png",
+    "3.png",
+    "4.png",
+    "5.png",
+    "6.png",
+    "7.png",
+    "8.png",
+    "9.png",
+    "10.png",
+    "11.png",
+    "12.png"
+  ],
+  "templates": [
+    {
+      "rank": 1,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 2,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 3,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 4,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 5,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 6,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.021739,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 7,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 8,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 9,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 10,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 11,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224803_469234.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.021739,
+      "highlight_excluded": true
+    },
+    {
+      "rank": 12,
+      "source": "\\\\wsl.localhost\\Ubuntu\\home\\i8nd5t\\dev\\mk_lounge_totalling_bot\\image\\result\\capture_20260630_224431_413649.png",
+      "source_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "yellow_ratio": 0.0,
+      "highlight_excluded": true
+    }
+  ],
+  "note": "Templates are tight raw rank-glyph crops. Top padding is trimmed while keeping bottom room for glyph descenders/outline. Sources prefer non-highlighted rows; runtime detection should compare preprocessed edges/masks."
+}
