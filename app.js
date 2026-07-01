@@ -47,7 +47,6 @@
     captureCanvas: document.getElementById("captureCanvas"),
     detectedResultImage: document.getElementById("detectedResultImage"),
     detectedResultPlaceholder: document.getElementById("detectedResultPlaceholder"),
-    detectScores: document.getElementById("detectScores"),
     specimenStatus: document.getElementById("specimenStatus"),
     pendingMatchPanel: document.getElementById("pendingMatchPanel"),
     pendingMatchEntries: document.getElementById("pendingMatchEntries"),
@@ -648,7 +647,6 @@
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(els.captureVideo, 0, 0, canvas.width, canvas.height);
     const result = detectResultScreen(ctx);
-    renderDetectionScores(result.scores);
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
       if (isResultProcessingLocked()) {
@@ -903,16 +901,6 @@
       values[i] = binary.charCodeAt(i);
     }
     return values;
-  }
-
-  function renderDetectionScores(scores) {
-    els.detectScores.innerHTML = "";
-    scores.forEach((score, index) => {
-      const item = document.createElement("div");
-      item.className = `detect-score${score >= RANK_SCORE_THRESHOLD ? " match" : ""}`;
-      item.innerHTML = `<span>${index + 1}</span><span>${score.toFixed(3)}</span>`;
-      els.detectScores.append(item);
-    });
   }
 
   bindEvents();
