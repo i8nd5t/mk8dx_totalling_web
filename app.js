@@ -33,6 +33,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const isOverlayView = urlParams.get("view") === "overlay";
 
+  document.documentElement.classList.toggle("overlay-only", isOverlayView);
   document.body.classList.toggle("overlay-only", isOverlayView);
 
   const els = {

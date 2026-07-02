@@ -53,6 +53,7 @@ def test_manual_flow_and_reset_are_present() -> None:
     assert "function openOverlayWindow" in script
     assert "function broadcastStateToOverlay" in script
     assert "function applyExternalState" in script
+    assert "document.documentElement.classList.toggle" in script
     assert "view\", \"overlay\"" in script
     assert 'window.addEventListener("storage"' in script
     assert 'window.addEventListener("message"' in script
@@ -88,4 +89,7 @@ def test_overlay_crop_area_has_stable_dimensions() -> None:
     assert "--col-score: 62px;" in styles
     assert "grid-template-columns: minmax(0, 1fr) var(--col-score);" in styles
     assert ".modal-backdrop[hidden]" in styles
+    assert "html.overlay-only" in styles
     assert "body.overlay-only" in styles
+    assert "body.overlay-only .scoreboard" in styles
+    assert "width: 180px;" in styles

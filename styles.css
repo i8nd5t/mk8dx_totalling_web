@@ -596,7 +596,11 @@ body.overlay-only {
   width: 400px;
   height: 690px;
   overflow: hidden;
-  background: transparent;
+  background: transparent !important;
+}
+
+html.overlay-only {
+  background: transparent !important;
 }
 
 body.overlay-only .workspace,
@@ -609,6 +613,7 @@ body.overlay-only .app-shell {
   display: block;
   min-height: 0;
   padding: 0;
+  background: transparent !important;
 }
 
 body.overlay-only .overlay-stage,
@@ -623,12 +628,16 @@ body.overlay-only .overlay-surface {
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.overlay-only .scoreboard {
   margin: 0;
+  width: 180px;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
 }
 
 .overlay-race-count {
