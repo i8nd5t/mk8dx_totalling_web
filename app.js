@@ -17,7 +17,7 @@
     12: 1,
   };
   const RANK_TEMPLATE_BASE = "./assets/rank_templates";
-  const RANK_SCORE_THRESHOLD = 0.62;
+  const RANK_SCORE_THRESHOLD = 0.35;
   const RANK_MIN_MATCHES = 10;
   const DETECTION_INTERVAL_MS = 650;
   const MATCH_CANDIDATE_COOLDOWN_MS = 5000;
@@ -29,10 +29,16 @@
   const NAME_ROW_STRIDE = 52;
   const FEATURE_WIDTH = NAME_WIDTH * 2;
   const FEATURE_HEIGHT = NAME_HEIGHT * 2;
+  const YELLOW_ROW_POINT_THRESHOLD = 100;
+  const urlParams = new URLSearchParams(window.location.search);
+  const isOverlayView = urlParams.get("view") === "overlay";
+
+  document.body.classList.toggle("overlay-only", isOverlayView);
 
   const els = {
     myTeamInput: document.getElementById("myTeamInput"),
     openManualInputButton: document.getElementById("openManualInputButton"),
+    openOverlayButton: document.getElementById("openOverlayButton"),
     resetButton: document.getElementById("resetButton"),
     raceInputModal: document.getElementById("raceInputModal"),
     closeRaceInputModalButton: document.getElementById("closeRaceInputModalButton"),
@@ -53,15 +59,13 @@
     modalResultImage: document.getElementById("modalResultImage"),
     modalResultPlaceholder: document.getElementById("modalResultPlaceholder"),
     specimenStatus: document.getElementById("specimenStatus"),
-    pendingMatchPanel: document.getElementById("pendingMatchPanel"),
-    pendingMatchEntries: document.getElementById("pendingMatchEntries"),
-    addPendingRaceButton: document.getElementById("addPendingRaceButton"),
-    clearPendingRaceButton: document.getElementById("clearPendingRaceButton"),
+    quickSteps: Array.from(document.querySelectorAll(".quick-step")),
   };
   let previousOverlayRaceCount = null;
   let raceUpdateTimer = 0;
+  let overlayWindow = null;
 
-  const state = loadState();
+  let state = loadState();
   const capture = {
     stream: null,
     timer: 0,
@@ -93,7 +97,6 @@
       races: [],
       draftEntries: blankEntries(),
       specimens: [],
-      pendingMatch: null,
     };
   }
 
@@ -111,7 +114,6 @@
         ...defaultState(),
         ...parsed,
         specimens: normalizeSpecimens(parsed.specimens || []),
-        pendingMatch: null,
         draftEntries: normalizeEntries(parsed.draftEntries || blankEntries()),
         races: parsed.races.map((race, index) => ({
           raceNo: index + 1,
@@ -125,6 +127,41 @@
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    broadcastStateToOverlay();
+  }
+
+  function applyExternalState(nextState) {
+    state = normalizeState(nextState);
+    renderAll();
+  }
+
+  function normalizeState(nextState) {
+    if (!nextState || nextState.version !== STORAGE_VERSION || !Array.isArray(nextState.races)) {
+      return defaultState();
+    }
+    return {
+      ...defaultState(),
+      ...nextState,
+      specimens: normalizeSpecimens(nextState.specimens || []),
+      draftEntries: normalizeEntries(nextState.draftEntries || blankEntries()),
+      races: nextState.races.map((race, index) => ({
+        raceNo: index + 1,
+        entries: normalizeEntries(race.entries || []),
+      })),
+    };
+  }
+
+  function broadcastStateToOverlay() {
+    if (!overlayWindow || overlayWindow.closed) {
+      return;
+    }
+    overlayWindow.postMessage(
+      {
+        type: "mk-lounge-state",
+        state,
+      },
+      "*",
+    );
   }
 
   function normalizeSpecimens(specimens) {
@@ -198,8 +235,8 @@
     els.raceInputModal.hidden = false;
     els.raceInputModalHint.textContent =
       reason === "detected"
-        ? "リザルト画面を検出しました。12位まで入力すると自動で追加されます。"
-        : "12位まで入力すると自動で追加されます。";
+        ? "左のスクリーンショットを見ながら、順位ごとのタグを入力してください。12位まで埋まると自動で追加されます。"
+        : "順位ごとのタグを入力してください。12位まで埋まると自動で追加されます。";
     renderModalScreenshot();
     const firstInput = els.raceEntryGrid.querySelector("input");
     if (firstInput) {
@@ -321,7 +358,7 @@
     if (state.races.length === 0) {
       const empty = document.createElement("p");
       empty.className = "empty-state";
-      empty.textContent = "Race Historyはまだ空です。";
+      empty.textContent = "まだレースはありません。画面共有を開始して、1レース目のリザルトが表示されるまで待ってください。";
       els.historyList.append(empty);
       return;
     }
@@ -334,7 +371,7 @@
       const deleteButton = document.createElement("button");
       deleteButton.className = "icon-danger-button";
       deleteButton.type = "button";
-      deleteButton.textContent = "Delete";
+      deleteButton.textContent = "削除";
       deleteButton.addEventListener("click", () => deleteRace(race.raceNo));
       const cardHeader = document.createElement("div");
       cardHeader.className = "history-card-header";
@@ -377,40 +414,19 @@
   function renderSpecimenStatus() {
     const count = state.specimens.length;
     if (count >= 12) {
-      els.specimenStatus.textContent = "自動判定の準備完了";
+      els.specimenStatus.textContent = "2レース目以降を検出できます";
     } else if (capture.heldResult && state.races.length === 0) {
-      els.specimenStatus.textContent = "リザルトを検出しました。1レース目を入力してください";
+      els.specimenStatus.textContent = "1レース目のタグを入力してください";
     } else if (capture.heldResult) {
-      els.specimenStatus.textContent = "リザルトを検出しました。準備中です";
+      els.specimenStatus.textContent = "検出画像を確認してください";
     } else if (state.races.length === 0 && !capture.lastFeatures) {
-      els.specimenStatus.textContent = "1レース目入力とリザルト検出で準備します";
+      els.specimenStatus.textContent = "画面共有を開始し、1レース目のリザルトを待ちます";
     } else if (state.races.length === 0) {
       els.specimenStatus.textContent = "1レース目を入力してください";
     } else if (!capture.lastFeatures) {
       els.specimenStatus.textContent = "1レース目のリザルトを表示してください";
     } else {
-      els.specimenStatus.textContent = "準備中です";
-    }
-  }
-
-  function renderPendingMatch() {
-    if (!state.pendingMatch) {
-      els.pendingMatchPanel.hidden = true;
-      els.pendingMatchEntries.innerHTML = "";
-      return;
-    }
-    els.pendingMatchPanel.hidden = false;
-    els.pendingMatchEntries.innerHTML = "";
-    for (const entry of state.pendingMatch.entries) {
-      const row = document.createElement("div");
-      row.className = "pending-entry";
-      row.innerHTML = `
-        <span>${entry.position}</span>
-        <span></span>
-        <span>+${entry.score}</span>
-      `;
-      row.querySelector("span:nth-child(2)").textContent = entry.team;
-      els.pendingMatchEntries.append(row);
+      els.specimenStatus.textContent = "検出結果を確認してください";
     }
   }
 
@@ -420,7 +436,7 @@
 
   function addRaceFromDraft() {
     if (state.races.length >= MAX_RACES) {
-      showError("12レースまで追加済みです。新しく始める場合はReset Allしてください。");
+      showError("12レースまで追加済みです。新しく始める場合は「最初から」を押してください。");
       return;
     }
     const entries = normalizeEntries(state.draftEntries);
@@ -460,7 +476,6 @@
       team: entry.team,
       feature: uint8ToBase64(capture.lastFeatures[entry.position - 1]),
     }));
-    state.pendingMatch = null;
     startResultCooldown();
     return true;
   }
@@ -478,31 +493,19 @@
     }
   }
 
-  function addPendingRace() {
-    if (!state.pendingMatch) {
-      return;
-    }
+  function addMatchedRace(entries) {
     if (state.races.length >= MAX_RACES) {
-      showError("12レースまで追加済みです。新しく始める場合はReset Allしてください。");
+      showError("12レースまで追加済みです。新しく始める場合は「最初から」を押してください。");
       return;
     }
     state.races.push({
       raceNo: state.races.length + 1,
-      entries: normalizeEntries(state.pendingMatch.entries),
+      entries: normalizeEntries(entries),
     });
-    state.pendingMatch = null;
     startResultCooldown();
     saveState();
     showError("");
     renderAll();
-  }
-
-  function clearPendingRace() {
-    state.pendingMatch = null;
-    releaseHeldResult();
-    saveState();
-    renderPendingMatch();
-    renderSpecimenStatus();
   }
 
   function deleteRace(raceNo) {
@@ -517,7 +520,6 @@
       }));
     if (raceNo === 1) {
       state.specimens = [];
-      state.pendingMatch = null;
       releaseHeldResult();
       capture.lockedUntil = 0;
     }
@@ -535,7 +537,6 @@
     state.races = fresh.races;
     state.draftEntries = fresh.draftEntries;
     state.specimens = fresh.specimens;
-    state.pendingMatch = fresh.pendingMatch;
     capture.lastFeatures = null;
     capture.lastScreenshotUrl = "";
     els.detectedResultImage.style.backgroundImage = "";
@@ -549,6 +550,7 @@
   }
 
   function bindEvents() {
+    els.openOverlayButton.addEventListener("click", openOverlayWindow);
     els.openManualInputButton.addEventListener("click", () => openRaceInputModal("manual"));
     els.closeRaceInputModalButton.addEventListener("click", closeRaceInputModal);
     els.raceInputModal.addEventListener("click", (event) => {
@@ -559,23 +561,57 @@
     els.resetButton.addEventListener("click", resetAll);
     els.startCaptureButton.addEventListener("click", startCapture);
     els.stopCaptureButton.addEventListener("click", stopCapture);
-    els.addPendingRaceButton.addEventListener("click", addPendingRace);
-    els.clearPendingRaceButton.addEventListener("click", clearPendingRace);
     els.myTeamInput.addEventListener("input", () => {
       state.myTeamTag = els.myTeamInput.value.trim();
       saveState();
       renderAll();
     });
+    window.addEventListener("storage", (event) => {
+      if (event.key !== STORAGE_KEY) {
+        return;
+      }
+      applyExternalState(loadState());
+    });
+    window.addEventListener("message", (event) => {
+      if (!event.data || event.data.type !== "mk-lounge-state") {
+        return;
+      }
+      applyExternalState(event.data.state);
+    });
+  }
+
+  function openOverlayWindow() {
+    const overlayUrl = new URL(window.location.href);
+    overlayUrl.searchParams.set("view", "overlay");
+    overlayWindow = window.open(
+      overlayUrl.href,
+      "mk-lounge-overlay",
+      "popup=yes,width=400,height=690,menubar=no,toolbar=no,location=no,status=no",
+    );
+    window.setTimeout(broadcastStateToOverlay, 250);
+    window.setTimeout(broadcastStateToOverlay, 1000);
   }
 
   function renderAll() {
     els.myTeamInput.value = state.myTeamTag;
     renderDraftInputs();
+    renderQuickSteps();
     renderHistory();
     renderOverlay();
     renderSpecimenStatus();
-    renderPendingMatch();
     renderModalScreenshot();
+  }
+
+  function renderQuickSteps() {
+    let activeStep = "capture";
+    if (state.races.length > 0) {
+      activeStep = "history";
+    } else if (capture.heldResult || capture.lastFeatures) {
+      activeStep = "first-race";
+    }
+    for (const step of els.quickSteps) {
+      step.classList.toggle("active", step.dataset.step === activeStep);
+    }
   }
 
   async function startCapture() {
@@ -595,7 +631,7 @@
       await els.captureVideo.play();
       els.startCaptureButton.disabled = true;
       els.stopCaptureButton.disabled = false;
-      setCaptureStatus("画面共有中。リザルト画面を監視しています。");
+      setCaptureStatus("画面共有中です。リザルト画面が出るまでそのまま待ってください。");
       capture.timer = window.setInterval(scanSharedFrame, DETECTION_INTERVAL_MS);
       capture.stream.getVideoTracks().forEach((track) => {
         track.addEventListener("ended", stopCapture);
@@ -619,7 +655,7 @@
     els.startCaptureButton.disabled = false;
     els.stopCaptureButton.disabled = true;
     if (!els.captureStatus.classList.contains("error")) {
-      setCaptureStatus("停止しました。");
+      setCaptureStatus("停止しました。再開する場合は画面共有を開始してください。");
     }
   }
 
@@ -640,8 +676,8 @@
     capture.templates = [];
     for (const file of capture.metadata.files) {
       const image = await loadImage(`${RANK_TEMPLATE_BASE}/${file}`);
-      const pixels = imageToGrayscaleVector(image, capture.metadata.rank_roi.width, capture.metadata.rank_roi.height);
-      capture.templates.push(normalizeVector(pixels));
+      const pixels = imageToRankEdgeVector(image, capture.metadata.rank_roi.width, capture.metadata.rank_roi.height);
+      capture.templates.push(pixels);
     }
   }
 
@@ -654,22 +690,60 @@
     });
   }
 
-  function imageToGrayscaleVector(image, width, height) {
+  function imageToRankEdgeVector(image, width, height) {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(image, 0, 0, width, height);
-    return imageDataToVector(ctx.getImageData(0, 0, width, height));
+    return rankEdgeVectorFromImageData(ctx.getImageData(0, 0, width, height));
   }
 
-  function imageDataToVector(imageData) {
+  function grayscaleVectorFromImageData(imageData) {
     const data = imageData.data;
     const values = new Float32Array(imageData.width * imageData.height);
     for (let i = 0, j = 0; i < data.length; i += 4, j += 1) {
-      values[j] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
+      values[j] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
     }
     return values;
+  }
+
+  function rankEdgeVectorFromImageData(imageData) {
+    const gray = grayscaleVectorFromImageData(imageData);
+    const width = imageData.width;
+    const height = imageData.height;
+    const edges = new Float32Array(width * height);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const center = gray[y * width + x] * 8;
+        let around = 0;
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (dx === 0 && dy === 0) {
+              continue;
+            }
+            const xx = reflectIndex(x + dx, width);
+            const yy = reflectIndex(y + dy, height);
+            around += gray[yy * width + xx];
+          }
+        }
+        edges[y * width + x] = Math.abs(center - around);
+      }
+    }
+    return normalizeVector(edges);
+  }
+
+  function reflectIndex(index, length) {
+    if (length <= 1) {
+      return 0;
+    }
+    if (index < 0) {
+      return -index;
+    }
+    if (index >= length) {
+      return 2 * length - index - 2;
+    }
+    return index;
   }
 
   function normalizeVector(values) {
@@ -708,16 +782,24 @@
     if (result.detected) {
       capture.lastDetectedAt = Date.now();
       if (isResultProcessingLocked()) {
-        setCaptureStatus("直前のリザルトを処理しました。次のレースを待っています。", "detected");
+        setCaptureStatus("このリザルトは処理済みです。次のレースを待っています。", "detected");
       } else if (capture.heldResult) {
-        setCaptureStatus("リザルト画面を検出済みです。確認してください。", "detected");
+        setCaptureStatus("リザルト画面を保持しています。入力または確認をしてください。", "detected");
       } else {
         showDetectedResultScreenshot(canvas);
-        handleDetectedFrame(ctx);
-        setCaptureStatus("リザルト画面を検出しました。確認してください。", "detected");
+        const action = handleDetectedFrame(ctx);
+        if (action === "added") {
+          setCaptureStatus("リザルト画面を検出し、レース履歴へ追加しました。", "detected");
+        } else if (action === "first-race") {
+          setCaptureStatus("リザルト画面を検出しました。1レース目のタグを入力してください。", "detected");
+        } else if (action === "unmatched") {
+          setCaptureStatus("リザルト画面を検出しましたが、タグ判定に失敗しました。必要なら手入力してください。", "detected");
+        } else {
+          setCaptureStatus("リザルト画面を検出しました。", "detected");
+        }
       }
     } else {
-      setCaptureStatus("監視中です。");
+      setCaptureStatus("リザルト画面を待っています。");
     }
   }
 
@@ -748,30 +830,30 @@
     capture.lastFeatures = extractNameFeatures(ctx);
     if (state.races.length === 0) {
       openRaceInputModal("detected");
+      renderQuickSteps();
+      renderSpecimenStatus();
+      return "first-race";
     }
     const builtSpecimens = maybeBuildFirstRaceSpecimens();
     if (builtSpecimens) {
       saveState();
     }
+    renderQuickSteps();
     renderSpecimenStatus();
-    if (builtSpecimens || state.specimens.length < 12 || state.pendingMatch || state.races.length >= MAX_RACES) {
-      return;
+    if (builtSpecimens || state.specimens.length < 12 || state.races.length >= MAX_RACES) {
+      return "held";
     }
     const now = Date.now();
     if (now - capture.lastPendingAt < MATCH_CANDIDATE_COOLDOWN_MS) {
-      return;
+      return "held";
     }
     const matched = matchFeatures(capture.lastFeatures);
     if (!matched) {
-      return;
+      return "unmatched";
     }
-    state.pendingMatch = {
-      entries: matched,
-      createdAt: now,
-    };
     capture.lastPendingAt = now;
-    saveState();
-    renderPendingMatch();
+    addMatchedRace(matched);
+    return "added";
   }
 
   function extractNameFeatures(ctx) {
@@ -785,11 +867,12 @@
   }
 
   function featureFromNameImageData(imageData) {
+    const burnedImageData = burnImageData(imageData);
     const sourceCanvas = document.createElement("canvas");
-    sourceCanvas.width = imageData.width;
-    sourceCanvas.height = imageData.height;
+    sourceCanvas.width = burnedImageData.width;
+    sourceCanvas.height = burnedImageData.height;
     const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
-    sourceCtx.putImageData(imageData, 0, 0);
+    sourceCtx.putImageData(burnedImageData, 0, 0);
 
     const featureCanvas = document.createElement("canvas");
     featureCanvas.width = FEATURE_WIDTH;
@@ -801,21 +884,84 @@
     const resized = featureCtx.getImageData(0, 0, FEATURE_WIDTH, FEATURE_HEIGHT);
     const data = resized.data;
     const feature = new Uint8Array(FEATURE_WIDTH * FEATURE_HEIGHT);
+    const isYellow = isYellowNameImageData(resized);
     for (let i = 0, j = 0; i < data.length; i += 4, j += 1) {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
       const total = r + g + b;
-      let value = 255 - total / 3;
-      if (550 - total < 120) {
-        value = 255;
-      }
-      if (765 - total > 500) {
-        value = 255;
+      let value;
+      if (isYellow) {
+        value = r;
+        if (550 - total < 120) {
+          value = 255;
+        }
+      } else {
+        value = 255 - total / 3;
+        if (765 - total > 500) {
+          value = 255;
+        }
       }
       feature[j] = Math.max(0, Math.min(255, Math.round(value)));
     }
     return feature;
+  }
+
+  function burnImageData(imageData) {
+    const data = imageData.data;
+    const burned = new ImageData(imageData.width, imageData.height);
+    const output = burned.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const srcR = data[i] / 255;
+      const srcG = data[i + 1] / 255;
+      const srcB = data[i + 2] / 255;
+      let dstR = srcR;
+      let dstG = srcG;
+      let dstB = srcB;
+      for (let n = 0; n < 5; n += 1) {
+        dstR = srcR * dstR;
+        dstG = srcG * dstG;
+        dstB = srcB * dstB;
+      }
+      for (let n = 0; n < 5; n += 1) {
+        dstR = overlayBlend(srcR, dstR);
+        dstG = overlayBlend(srcG, dstG);
+        dstB = overlayBlend(srcB, dstB);
+      }
+      output[i] = Math.max(0, Math.min(255, Math.round(dstR * 255)));
+      output[i + 1] = Math.max(0, Math.min(255, Math.round(dstG * 255)));
+      output[i + 2] = Math.max(0, Math.min(255, Math.round(dstB * 255)));
+      output[i + 3] = data[i + 3];
+    }
+    return burned;
+  }
+
+  function overlayBlend(src, dst) {
+    if (dst <= 0.5) {
+      return 2 * src * dst;
+    }
+    return 1 - 2 * (1 - src) * (1 - dst);
+  }
+
+  function isYellowNameImageData(imageData) {
+    const data = imageData.data;
+    let topEdgePoints = 0;
+    let totalPoints = 0;
+    for (let y = 0; y < imageData.height; y += 1) {
+      for (let x = 0; x < imageData.width; x += 1) {
+        const i = (y * imageData.width + x) * 4;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (b >= 0 && b <= 100 && g >= 180 && g <= 255 && r >= 180 && r <= 255) {
+          totalPoints += 1;
+          if (y === 0) {
+            topEdgePoints += 1;
+          }
+        }
+      }
+    }
+    return Math.max(topEdgePoints, totalPoints) > YELLOW_ROW_POINT_THRESHOLD;
   }
 
   function matchFeatures(features) {
@@ -857,7 +1003,7 @@
     for (let index = 0; index < 12; index += 1) {
       const y = roi.y + roi.row_stride * index;
       const imageData = ctx.getImageData(roi.x, y, roi.width, roi.height);
-      const actual = normalizeVector(imageDataToVector(imageData));
+      const actual = rankEdgeVectorFromImageData(imageData);
       const score = dot(actual, capture.templates[index]);
       scores.push(score);
       if (score >= RANK_SCORE_THRESHOLD) {

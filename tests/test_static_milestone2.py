@@ -50,10 +50,12 @@ def test_browser_detection_logic_is_present() -> None:
     assert "navigator.mediaDevices.getDisplayMedia" in script
     assert "await els.captureVideo.play();" in script
     assert "RANK_TEMPLATE_BASE = \"./assets/rank_templates\"" in script
-    assert "RANK_SCORE_THRESHOLD = 0.62" in script
+    assert "RANK_SCORE_THRESHOLD = 0.35" in script
     assert "RANK_MIN_MATCHES = 10" in script
     assert "function ensureRankTemplates" in script
     assert "function detectResultScreen" in script
+    assert "function rankEdgeVectorFromImageData" in script
+    assert "function reflectIndex" in script
     assert "els.captureVideo.videoWidth === 0" in script
     assert "function showDetectedResultScreenshot" in script
     assert "capture.lastScreenshotUrl = canvas.toDataURL" in script

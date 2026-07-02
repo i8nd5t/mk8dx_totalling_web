@@ -12,45 +12,64 @@
         <header class="topbar">
           <div>
             <p class="eyebrow">MK8DX Lounge</p>
-            <h1>Static Scorer</h1>
+            <h1>ラウンジ集計ツール</h1>
+            <p class="topbar-summary">画面共有を開始すると、リザルト画面を検出してレース結果を集計します。</p>
           </div>
           <div class="topbar-actions">
             <label class="team-field">
               <span>自チーム</span>
               <input id="myTeamInput" type="text" maxlength="12" autocomplete="off" placeholder="例: A" />
             </label>
-            <button id="openManualInputButton" class="secondary-button" type="button">手動入力</button>
-            <button id="resetButton" class="danger-button" type="button">Reset All</button>
+            <button id="openManualInputButton" class="secondary-button" type="button">レースを手入力</button>
+            <button id="openOverlayButton" class="secondary-button" type="button">Overlayを開く</button>
+            <button id="resetButton" class="danger-button" type="button">最初から</button>
           </div>
         </header>
+
+        <section class="quick-start" aria-label="使い始めの流れ">
+          <div class="quick-step active" data-step="capture">
+            <span class="step-number">1</span>
+            <div>
+              <h2>画面共有を開始</h2>
+              <p>OBS Studio、ゲーム画面、キャプチャ画面のいずれかを選びます。</p>
+            </div>
+          </div>
+          <div class="quick-step" data-step="first-race">
+            <span class="step-number">2</span>
+            <div>
+              <h2>1レース目を入力</h2>
+              <p>最初だけ、検出画像を見ながら12位までのタグを入力します。</p>
+            </div>
+          </div>
+          <div class="quick-step" data-step="history">
+            <span class="step-number">3</span>
+            <div>
+              <h2>履歴を確認</h2>
+              <p>2レース目以降は自動で追加されます。違う場合は履歴から修正します。</p>
+            </div>
+          </div>
+        </section>
 
         <section class="layout-grid">
           <section class="panel capture-panel" aria-labelledby="captureTitle">
             <div class="panel-heading">
               <div>
-                <p class="eyebrow">Capture</p>
-                <h2 id="captureTitle">画面共有</h2>
+                <p class="eyebrow">Step 1</p>
+                <h2 id="captureTitle">リザルト検出</h2>
               </div>
               <div class="capture-actions">
-                <button id="startCaptureButton" class="primary-button" type="button">Start</button>
-                <button id="stopCaptureButton" class="secondary-button" type="button" disabled>Stop</button>
+                <button id="startCaptureButton" class="primary-button" type="button">画面共有を開始</button>
+                <button id="stopCaptureButton" class="secondary-button" type="button" disabled>停止</button>
               </div>
             </div>
-            <p class="hint">OBSまたはゲーム画面を共有します。順位表っぽいフレームをブラウザ内で判定します。</p>
-            <div id="captureStatus" class="capture-status">未開始</div>
+            <p class="hint">まず画面共有を開始してください。リザルト画面を検出すると、下にスクリーンショットが固定表示されます。</p>
+            <div id="captureStatus" class="capture-status">画面共有を開始してください</div>
             <div class="specimen-toolbar">
               <span id="specimenStatus" class="specimen-status">準備中</span>
             </div>
-            <div id="pendingMatchPanel" class="pending-match" hidden>
-              <div>
-                <p class="eyebrow">Detected Race</p>
-                <h3>検出結果</h3>
-              </div>
-              <div id="pendingMatchEntries" class="pending-match-entries"></div>
-              <div class="pending-actions">
-                <button id="addPendingRaceButton" class="primary-button" type="button">このレースを追加</button>
-                <button id="clearPendingRaceButton" class="secondary-button" type="button">破棄</button>
-              </div>
+            <div class="preview-heading">
+              <h3>検出したリザルト画面</h3>
+              <span>ここを見ながら入力・確認します</span>
             </div>
             <div class="result-capture-preview">
               <div id="detectedResultImage" class="detected-result-image" hidden></div>
@@ -63,24 +82,24 @@
             <canvas id="captureCanvas" width="1280" height="720" hidden></canvas>
           </section>
 
-        </section>
-
-        <section class="history-section" aria-labelledby="historyTitle">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Race History</p>
-              <h2 id="historyTitle">履歴編集</h2>
+          <section class="history-section" aria-labelledby="historyTitle">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Step 3</p>
+                <h2 id="historyTitle">レース履歴・修正</h2>
+              </div>
+              <p class="hint">タグが違うときは、この履歴の入力欄を直してください。右側の表示もすぐ更新されます。</p>
             </div>
-            <p class="hint">履歴を編集すると、集計とoverlayがすぐ更新されます。</p>
-          </div>
-          <div id="historyList" class="history-list"></div>
+            <div id="historyList" class="history-list"></div>
+          </section>
         </section>
       </section>
 
       <aside class="overlay-stage" aria-labelledby="overlayTitle">
         <div class="overlay-instructions">
-          <p class="eyebrow">OBS Crop Area</p>
-          <h2 id="overlayTitle">Overlay Preview</h2>
+          <p class="eyebrow">OBS表示</p>
+          <h2 id="overlayTitle">配信用順位表</h2>
+          <p class="hint">OBSではこの右側の順位表だけを切り抜いて使います。</p>
         </div>
         <section id="overlaySurface" class="overlay-surface">
           <div id="scoreboard" class="scoreboard no-ranking">
@@ -97,12 +116,12 @@
       <section class="race-input-modal" role="dialog" aria-modal="true" aria-labelledby="raceInputTitle">
         <div class="modal-heading">
           <div>
-            <p class="eyebrow">Race Input</p>
-            <h2 id="raceInputTitle">レース結果入力</h2>
+            <p class="eyebrow">Step 2</p>
+            <h2 id="raceInputTitle">1レース目のタグ入力</h2>
           </div>
           <button id="closeRaceInputModalButton" class="secondary-button" type="button">閉じる</button>
         </div>
-        <p id="raceInputModalHint" class="hint">12位まで入力すると自動で追加されます。</p>
+        <p id="raceInputModalHint" class="hint">左のスクリーンショットを見ながら、順位ごとのタグを入力してください。12位まで埋まると自動で追加されます。</p>
         <div class="modal-body">
           <div class="modal-capture-preview">
             <div id="modalResultImage" class="detected-result-image" hidden></div>

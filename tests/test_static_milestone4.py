@@ -24,7 +24,7 @@ def test_race_delete_flow_is_present() -> None:
     assert "Race ${raceNo} を削除します" in script
     assert "raceNo === 1" in script
     assert "state.specimens = []" in script
-    assert "state.pendingMatch = null" in script
+    assert "releaseHeldResult();" in script
 
 
 def test_history_delete_button_styles_are_present() -> None:

@@ -13,12 +13,18 @@ def test_app_is_buildless_static_page() -> None:
 
     assert '<link rel="stylesheet" href="./styles.css" />' in html
     assert '<script src="./app.js"></script>' in html
-    assert "Overlay Preview" in html
-    assert "Race History" in html
-    assert "レース結果入力" in html
+    assert "ラウンジ集計ツール" in html
+    assert "使い始めの流れ" in html
+    assert 'data-step="capture"' in html
+    assert 'data-step="first-race"' in html
+    assert 'data-step="history"' in html
+    assert "配信用順位表" in html
+    assert "レース履歴・修正" in html
+    assert "1レース目のタグ入力" in html
     assert 'id="raceInputModal"' in html
     assert 'role="dialog"' in html
     assert 'id="openManualInputButton"' in html
+    assert 'id="openOverlayButton"' in html
     assert 'id="modalResultImage"' in html
     assert 'id="addRaceButton"' not in html
 
@@ -44,6 +50,15 @@ def test_manual_flow_and_reset_are_present() -> None:
     assert "function addRaceFromDraft" in script
     assert "function maybeAddRaceFromCompletedDraft" in script
     assert "function resetAll" in script
+    assert "function openOverlayWindow" in script
+    assert "function broadcastStateToOverlay" in script
+    assert "function applyExternalState" in script
+    assert "view\", \"overlay\"" in script
+    assert 'window.addEventListener("storage"' in script
+    assert 'window.addEventListener("message"' in script
+    assert "mk-lounge-state" in script
+    assert "overlayWindow.postMessage" in script
+    assert "let state = loadState();" in script
     assert "window.confirm" in script
     assert "12レースまで追加済み" in script
     assert "タグが未入力の順位があります" in script
@@ -53,6 +68,8 @@ def test_overlay_and_history_rendering_are_present() -> None:
     script = read("app.js")
 
     assert "function renderOverlay" in script
+    assert "function renderQuickSteps" in script
+    assert 'activeStep = "history"' in script
     assert "function renderHistory" in script
     assert "team-row" in script
     assert "rank-gap" in script
@@ -71,3 +88,4 @@ def test_overlay_crop_area_has_stable_dimensions() -> None:
     assert "--col-score: 62px;" in styles
     assert "grid-template-columns: minmax(0, 1fr) var(--col-score);" in styles
     assert ".modal-backdrop[hidden]" in styles
+    assert "body.overlay-only" in styles

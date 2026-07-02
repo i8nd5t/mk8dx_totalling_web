@@ -13,9 +13,9 @@ def test_specimen_controls_are_present() -> None:
 
     assert 'id="specimenStatus"' in html
     assert 'id="buildSpecimensButton"' not in html
-    assert 'id="pendingMatchPanel"' in html
-    assert 'id="addPendingRaceButton"' in html
-    assert 'id="clearPendingRaceButton"' in html
+    assert 'id="pendingMatchPanel"' not in html
+    assert 'id="addPendingRaceButton"' not in html
+    assert 'id="clearPendingRaceButton"' not in html
 
 
 def test_name_feature_extraction_constants_match_ocr_layout() -> None:
@@ -28,6 +28,7 @@ def test_name_feature_extraction_constants_match_ocr_layout() -> None:
     assert "const NAME_ROW_STRIDE = 52" in script
     assert "const FEATURE_WIDTH = NAME_WIDTH * 2" in script
     assert "const FEATURE_HEIGHT = NAME_HEIGHT * 2" in script
+    assert "const YELLOW_ROW_POINT_THRESHOLD = 100" in script
 
 
 def test_specimen_and_matching_flow_is_present() -> None:
@@ -42,11 +43,15 @@ def test_specimen_and_matching_flow_is_present() -> None:
     assert "buildSpecimensButton" not in script
     assert "function extractNameFeatures" in script
     assert "function featureFromNameImageData" in script
+    assert "function burnImageData" in script
+    assert "function overlayBlend" in script
+    assert "function isYellowNameImageData" in script
     assert "function matchFeatures" in script
+    assert "function addMatchedRace" in script
     assert "function maximizeAssignment" in script
     assert "function uint8ToBase64" in script
     assert "function base64ToUint8" in script
-    assert "state.pendingMatch" in script
+    assert "state.pendingMatch" not in script
 
 
 def test_first_race_edits_update_specimen_teams() -> None:
